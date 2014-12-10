@@ -40,27 +40,35 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   wire [8:0]trig_pos; //The trigger position from the CNC to the Capture
   wire [7:0]RAM_rdata; //Data from RAM Interface to CNC
   wire [7:0]trig_cfg;
+  wire [3:0] decimator;
  
   ///////////////////////////////////////////////////////
   // Instantiate the blocks of your digital core next //
   /////////////////////////////////////////////////////
   
-  ADC_Capture iADC_Cap(.clk(clk), .rst_n(rst_n), .trig1(trig1), .trig2(trig2), .trig_en(trig_en), .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .addr_ptr(addr_ptr), .capture_done(capture_done));
+  ADC_Capture iADC_Cap(.clk(clk), .rst_n(rst_n), .trig1(trig1), .trig2(trig2), .trig_en(trig_en),
+                       .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .addr_ptr(addr_ptr),
+                       .capture_done(capture_done), .decimator(decimator));
 
 
-  RAM_Interface iRAM_Int(.clk(clk), .rst_n(rst_n), .ch1_rdata(ch1_rdata), .ch2_rdata(ch2_rdata), .ch3_rdata(ch3_rdata), .addr_ptr(addr_ptr),
-                         .capture_done(capture_done), .en(en), .we(we), .addr(addr), .RAM_rdata(RAM_rdata));
+  RAM_Interface iRAM_Int(.clk(clk), .rst_n(rst_n), .ch1_rdata(ch1_rdata), .ch2_rdata(ch2_rdata),
+                         .ch3_rdata(ch3_rdata), .addr_ptr(addr_ptr), .capture_done(capture_done),
+                         .en(en), .we(we), .addr(addr), .RAM_rdata(RAM_rdata));
 
 
-  Command_Config iCNC(.clk(clk), .rst_n(rst_n), .SPI_done(SPI_done), .EEP_data(EEP_data), .cmd(cmd), .cmd_rdy(cmd_rdy), .resp_sent(resp_sent),
-                      .capture_done(capture_done), .RAM_rdata(RAM_rdata), .adc_clk(adc_clk), .rclk(rclk), .SPI_data(SPI_data), .wrt_SPI(wrt_SPI),
-					  .ss(ss), .clr_cmd_rdy(clr_cmd_rdy), .resp_data(resp_data), .send_resp(send_resp), .trig_pos(trig_pos),
-					  .clr_cap_done(clr_cap_done), .trig_en(trig_en), .trig_cfg(trig_cfg));
+  Command_Config iCNC(.clk(clk), .rst_n(rst_n), .SPI_done(SPI_done), .EEP_data(EEP_data),
+                      .cmd(cmd), .cmd_rdy(cmd_rdy), .resp_sent(resp_sent),
+                      .capture_done(capture_done), .RAM_rdata(RAM_rdata), .adc_clk(adc_clk),
+                      .rclk(rclk), .SPI_data(SPI_data), .wrt_SPI(wrt_SPI), .ss(ss), 
+                      .clr_cmd_rdy(clr_cmd_rdy), .resp_data(resp_data), .send_resp(send_resp),
+                      .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .trig_en(trig_en),
+                      .trig_cfg(trig_cfg), .decimator(decimator));
   
   
 endmodule
 
-module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done, addr_ptr, capture_done);
+module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
+                   decimator, decimator, addr_ptr, capture_done);
   /////////////////////////////////////////////////////////////////
   //This module controls the flow of data capture from the ADCs.//
   //Contains arming logic that determines if it can trigger.   //
@@ -73,16 +81,16 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done, ad
   input clr_cap_done;
   input [4:0] decimator;
   output logic [8:0] addr_ptr;
-  output capture_done;
+  output logic capture_done;
   
   typedef enum logic [2:0] { IDLE, WRT, SMPL, TRIG, DONE } state_t;
   state_t currentState, nextState;
   
   logic clr_cnt;
-  wire [3:0] smpl_cnt, trig_cnt;
-  wire en_smpl_cnt, en_trig_cnt;
+  logic [3:0] smpl_cnt, trig_cnt;
+  logic en_smpl_cnt, en_trig_cnt;
   logic armed;
-  wire [7:0] trace_end;
+  logic [7:0] trace_end;
   
   ////////////////////////////////////////
   // Following code is the state flops //
@@ -98,11 +106,11 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done, ad
   // Control smpl_cnt //
   /////////////////////
   always_ff @(posedge clk, negedge rst_n) begin
-    if(!rst_n) begin
+    if(!rst_n)
       smpl_cnt <= 4'h0;
-    end else if(clr_cnt)
+    else if(clr_cnt)
       smpl_cnt <= 4'h0;
-    end else if(en_smpl_cnt)
+    else if(en_smpl_cnt)
       smpl_cnt <= smpl_cnt + 1;
   end
 
@@ -126,12 +134,12 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done, ad
     armed = 1'b0;
     nextState = IDLE;
     case(currentState)
-      IDLE : 
+      IDLE :  begin
         if(trig_en) begin
           nextState = WRT;
           clr_cnt = 1;
         end
-      WRT : 
+      end WRT : begin
         if(trig1 || trig2) begin
           nextState = TRIG;
           en_trig_cnt = 1;
@@ -140,25 +148,25 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done, ad
           nextState = SMPL;
           en_smpl_cnt = 1;
         end
-      SMPL :
+      end SMPL : begin
         nextState = WRT;
         if(smpl_cnt + trig_pos == 512) begin
           armed = 1; // Currently 1-clock cycle armed signal
         end
-      TRIG :
+      end TRIG : begin
         if(trig_cnt == trig_pos) begin
           nextState = DONE;
           capture_done = 1;
           trace_end = addr_ptr;
         end else
           nextState = WRT;
-      DONE :
+      end DONE : begin
         if(capture_done)
           nextState = DONE;
         else begin
           nextState = IDLE;
           armed = 0;
-        end
+        end end
       endcase
   end
 endmodule
@@ -182,7 +190,7 @@ endmodule
 
 module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, capture_done, RAM_rdata,
                       adc_clk, rclk, SPI_data, wrt_SPI, ss, clr_cmd_rdy, resp_data, send_resp, trig_pos,
-					  clr_cap_done, trig_en, trig_cfg,);
+					  clr_cap_done, trig_en, trig_cfg, decimator);
   input clk, rst_n, SPI_done, cmd_rdy, capture_done, resp_sent;
   input [7:0] EEP_data, RAM_rdata;
   input [23:0] cmd;
@@ -193,6 +201,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
   output logic [8:0] trig_pos;
   output logic [15:0] SPI_data;
   output logic [7:0] trig_cfg;
+  output logic [3:0] decimator;
 
   logic set_command;
   logic [23:0] command;
