@@ -68,7 +68,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
 endmodule
 
 module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
-                   decimator, decimator, addr_ptr, capture_done);
+                   decimator, addr_ptr, capture_done);
   /////////////////////////////////////////////////////////////////
   //This module controls the flow of data capture from the ADCs.//
   //Contains arming logic that determines if it can trigger.   //
@@ -309,6 +309,8 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
         end else if(command[23:16] == SET_DEC) begin
           // Set decimator (essentially the sample rate).
           // A 4-bit value is specified in bits[3:0] of the 3rd byte.
+          decimator = command[3:0];
+          nextState = IDLE;
         end else if(command[23:16] == TRIG_CFG) begin
           // Write trig_cfg register. This command is used to clear the capture_donebit (bit[5] = d).
           // This command is also used to configure the trigger parameters (edge, trigger type, channel)
