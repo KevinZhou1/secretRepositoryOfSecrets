@@ -48,7 +48,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   
   ADC_Capture iADC_Cap(.clk(clk), .rst_n(rst_n), .trig1(trig1), .trig2(trig2), .trig_en(trig_en),
                        .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .addr_ptr(addr_ptr),
-                       .capture_done(capture_done), .decimator(decimator));
+                       .capture_done(capture_done), .decimator(decimator), .dump(dump));
 
 
   RAM_Interface iRAM_Int(.clk(clk), .rst_n(rst_n), .ch1_rdata(ch1_rdata), .ch2_rdata(ch2_rdata),
@@ -62,13 +62,13 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
                       .rclk(rclk), .SPI_data(SPI_data), .wrt_SPI(wrt_SPI), .ss(ss), 
                       .clr_cmd_rdy(clr_cmd_rdy), .resp_data(resp_data), .send_resp(send_resp),
                       .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .trig_en(trig_en),
-                      .trig_cfg(trig_cfg), .decimator(decimator));
+                      .trig_cfg(trig_cfg), .decimator(decimator), .dump(dump));
   
   
 endmodule
 
 module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
-                   decimator, addr_ptr, capture_done);
+                   decimator, addr_ptr, capture_done, dump);
   /////////////////////////////////////////////////////////////////
   //This module controls the flow of data capture from the ADCs.//
   //Contains arming logic that determines if it can trigger.   //
@@ -87,7 +87,8 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   state_t currentState, nextState;
   
   logic clr_cnt;
-  logic [3:0] smpl_cnt, trig_cnt;
+  logic [15:0] smpl_cnt, trig_cnt;
+  logic [14:0] wait_cnt;
   logic en_smpl_cnt, en_trig_cnt;
   logic armed;
   logic [7:0] trace_end;
@@ -126,11 +127,39 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
       trig_cnt <= trig_cnt + 1;
   end
   
+  ///////////////////////
+  // Control wait_cnt //
+  /////////////////////
+  always_ff @(posedge clk, negedge rst_n) begin
+    if(!rst_n) begin
+      wait_cnt <= 15'h0000;
+      write <= 1'b0;
+    end else if(wait_cnt == 1 << (decimator) - 1)
+      write <= 1'b1;
+      wait_cnt <= 15'h0000;
+    else if(en_wait_cnt) begin
+      wait_cnt <= wait_cnt + 1;
+      write <= 1'b0;
+    end
+  end
+  
+  ///////////////////////
+  // Control addr_ptr //
+  /////////////////////
+  always_ff @(posedge clk, negedge rst_n) begin
+    if(!rst_n) begin
+      addr_ptr <= 16'h0000;
+    else if(write)
+      addr_ptr <= addr_ptr + 1;
+  end
+  
+  
   always_comb begin
     addr_ptr = 9'h000;
     clr_cnt = 1'b0;
     en_trig_cnt = 1'b0;
     en_smpl_cnt = 1'b0;
+    en_wait_cnt = 1'b0;
     armed = 1'b0;
     nextState = IDLE;
     case(currentState)
@@ -140,7 +169,10 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
           clr_cnt = 1;
         end
       end WRT : begin
-        if(trig1 || trig2) begin
+        en_wait_cnt = 1;
+        if(!write) begin
+          nextState = WRT;
+        end else if(trig1 || trig2) begin
           nextState = TRIG;
           en_trig_cnt = 1;
         end
@@ -190,7 +222,7 @@ endmodule
 
 module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, capture_done, RAM_rdata,
                       adc_clk, rclk, SPI_data, wrt_SPI, ss, clr_cmd_rdy, resp_data, send_resp, trig_pos,
-					  clr_cap_done, trig_en, trig_cfg, decimator);
+					  clr_cap_done, trig_en, trig_cfg, decimator, dump);
   input clk, rst_n, SPI_done, cmd_rdy, capture_done, resp_sent;
   input [7:0] EEP_data, RAM_rdata;
   input [23:0] cmd;
@@ -202,6 +234,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
   output logic [15:0] SPI_data;
   output logic [7:0] trig_cfg;
   output logic [3:0] decimator;
+  output logic dump;
 
   logic set_command;
   logic [23:0] command;
@@ -266,14 +299,15 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
     set_command = 0;
     clr_cmd_rdy = 0;
     wrt_SPI = 0;
-    ss = 3'b000;
-    SPI_data = 16'h0000;
-    resp_data = 8'h00;
     send_resp = 0;
     case(currentState)
       IDLE: if(cmd_rdy) begin
           nextState = CMD;
+          resp_data = 8'h00;
+          SPI_data = 16'h0000;
+          ss = 3'b000;
           set_command = 1;
+          dump = 0;
         end else begin
           nextState = IDLE;
         end
@@ -281,6 +315,8 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
           // Dump channel command. Channel to dump to UART is specified in the lower 2-bits
           // of the 2ndbyte.
           // cc=00 implies channel 1, cc=10 implies channel 3. and cc=11 is reserved
+          dump = 1;
+          nextState = IDLE;
         end else if(command[23:16] == CFG_GAIN) begin
           // Configure analog gain of channel (this would correspond to volts/div on an opamp).
           // Channel to set gain on is specified in lower 2-bits of the 2ndbyte (cc).
@@ -309,6 +345,7 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
         end else if(command[23:16] == SET_DEC) begin
           // Set decimator (essentially the sample rate).
           // A 4-bit value is specified in bits[3:0] of the 3rd byte.
+          // <DONE>
           decimator = command[3:0];
           nextState = IDLE;
         end else if(command[23:16] == TRIG_CFG) begin
@@ -339,12 +376,20 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
           ss = 3'b100;
           SPI_data = {2'b00, command[13:0]};
         end else begin
-          nextState = IDLE;
-          clr_cmd_rdy = 1; //No valid command, clear command and return to IDLE
+          // Failed response
+          // <DONE>
+          resp_data = 8'hEE;
+          send_resp = 1;
+          nextState = UART;
         end
       SPI: if(SPI_done) begin
-          nextState = IDLE;
-          clr_cmd_rdy = 1;  
+          clr_cmd_rdy = 1;
+          nextState = UART;
+          send_resp = 1;
+          if(SPI_data[14]) // Sent SPI, indicate positive response
+            resp_data = 7'hA5;
+          else // Send calibration EEPROM data
+            resp_data = EEP_data;
         end else
           nextState = SPI;
       UART: if(resp_sent) begin
