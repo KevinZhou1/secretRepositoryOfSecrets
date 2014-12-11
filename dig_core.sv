@@ -33,13 +33,13 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   //////////////////////////////////////////////////////////////////////////
   // Interconnects between modules...declare any wire types you need here//
   ////////////////////////////////////////////////////////////////////////
-  wire trig_en; //Enable signal from Command to Capture
-  wire capture_done; //Signal from capture module that it has triggered and capture is complete
-  wire clr_cap_done; //Signal to clear current capture status on the Capture module
-  wire [8:0]addr_ptr; //Current address from the Capture module
-  wire [8:0]trig_pos; //The trigger position from the CNC to the Capture
-  wire [7:0]RAM_rdata; //Data from RAM Interface to CNC
-  wire [7:0]trig_cfg;
+  wire trig_en;                                 // Enable signal from Command to Capture
+  wire capture_done;                            // Signal from capture module that it has triggered and capture is complete
+  wire clr_cap_done;                            // Signal to clear current capture status on the Capture module
+  wire [8:0] addr_ptr;                          // Current address from the Capture module
+  wire [8:0] trig_pos;                          // The trigger position from the CNC to the Capture
+  wire [7:0] RAM_rdata;                         // Data from RAM Interface to CNC
+  wire [7:0] trig_cfg;
   wire [3:0] decimator;
  
   ///////////////////////////////////////////////////////
@@ -80,6 +80,7 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   input [8:0] trig_pos;
   input clr_cap_done;
   input [4:0] decimator;
+  input dump;
   output logic [8:0] addr_ptr;
   output logic capture_done;
   
@@ -92,6 +93,8 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   logic en_smpl_cnt, en_trig_cnt;
   logic armed;
   logic [7:0] trace_end;
+  logic write;
+  logic en_wait_cnt;
   
   ////////////////////////////////////////
   // Following code is the state flops //
@@ -134,10 +137,10 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
     if(!rst_n) begin
       wait_cnt <= 15'h0000;
       write <= 1'b0;
-    end else if(wait_cnt == 1 << (decimator) - 1)
+    end else if(wait_cnt == 1 << (decimator) - 1) begin
       write <= 1'b1;
       wait_cnt <= 15'h0000;
-    else if(en_wait_cnt) begin
+    end else if(en_wait_cnt) begin
       wait_cnt <= wait_cnt + 1;
       write <= 1'b0;
     end
@@ -147,7 +150,7 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   // Control addr_ptr //
   /////////////////////
   always_ff @(posedge clk, negedge rst_n) begin
-    if(!rst_n) begin
+    if(!rst_n)
       addr_ptr <= 16'h0000;
     else if(write)
       addr_ptr <= addr_ptr + 1;
@@ -155,7 +158,6 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   
   
   always_comb begin
-    addr_ptr = 9'h000;
     clr_cnt = 1'b0;
     en_trig_cnt = 1'b0;
     en_smpl_cnt = 1'b0;
