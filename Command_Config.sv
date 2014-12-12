@@ -25,6 +25,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
   logic [23:0] command;
   logic [15:0] AFEgainSPI; //Serves as the output of a LUT for the possible gain settings
   logic wrt_trig_cfg;
+  logic flopAFEgain;
 
   typedef enum logic [1:0] { IDLE, CMD, SPI, UART } state_t;
   state_t currentState, nextState;
@@ -50,6 +51,44 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
       currentState <= IDLE;
     else
       currentState <= nextState;
+  end
+  
+   ///////////////////////////////////////
+  // 3x 3-bit AFEgain registers.       //
+  //////////////////////////////////////
+  always @(posedge clk, negedge rst_n) begin
+    if(!rst_n) begin
+      ch1_AFEgain <= 3'b000;
+      ch2_AFEgain <= 3'b000;
+      ch3_AFEgain <= 3'b000;
+	end else if(flopAFEgain) begin
+      case(command[9:8])
+            2'b00: begin
+              ch1_AFEgain <= command[12:10];
+              ch2_AFEgain <= ch2_AFEgain;
+              ch3_AFEgain <= ch3_AFEgain;
+			  end
+            2'b01: begin
+              ch1_AFEgain <= command[12:10];
+              ch2_AFEgain <= ch2_AFEgain;
+              ch3_AFEgain <= ch3_AFEgain;
+			  end
+            2'b10: begin
+              ch1_AFEgain <= command[12:10];
+              ch2_AFEgain <= ch2_AFEgain;
+              ch3_AFEgain <= ch3_AFEgain;
+			  end
+			default: begin
+              ch1_AFEgain <= ch1_AFEgain;
+              ch2_AFEgain <= ch2_AFEgain;
+              ch3_AFEgain <= ch3_AFEgain;			
+			end
+          endcase
+	end else begin
+	  ch1_AFEgain <= ch1_AFEgain;
+      ch2_AFEgain <= ch2_AFEgain;
+      ch3_AFEgain <= ch3_AFEgain;
+	end
   end
   
   ///////////////////////////////////////////////////////
@@ -85,6 +124,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
     wrt_SPI = 0;
     send_resp = 0;
     wrt_trig_cfg = 0;
+	flopAFEgain = 0;
     case(currentState)
       IDLE: if(cmd_rdy) begin
           nextState = CMD;
@@ -115,14 +155,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
           wrt_SPI = 1;
           ss = {1'b0,command[9:8]};
           SPI_data = AFEgainSPI;
-          case(command[9:8])
-            2'b10:
-              ch1_AFEgain = AFEgainSPI[5:3];
-            2'b10:
-              ch2_AFEgain = AFEgainSPI[5:3];
-            2'b11:
-              ch3_AFEgain = AFEgainSPI[5:3];
-          endcase
+		  flopAFEgain = 1;
         end else if((command[23:16] == TRIG_LVL) && (command[7:0] >= 46) && (command[7:0] <= 201)) begin
           // Set trigger level. This command is used to set the trigger level.
           // The value in the 3rdbyte (8’hLL) determines the trigger level.
