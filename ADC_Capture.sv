@@ -143,8 +143,4 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
       end 
       endcase
   end
-  // END MAIN LOGIC
-  // BEGIN DUMP LOGIC
-  
-  // END DUMP LOGIC
 endmodule

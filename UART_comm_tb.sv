@@ -20,32 +20,18 @@ always
     #2 clk = ~clk; // 500 MHz clock
 
 initial begin
-    // Send first byte of command
+    // Send command
     rst_n = 1;
     trmt = 0;
-    tx_data = 8'h55;
+    tx_data = 24'h55aa34;
     clr_cmd_rdy = 0;
     fail = 0;
     repeat(2) @(posedge clk);
     trmt = 1;
     @(posedge clk);
     trmt = 0;
-    @(posedge rdy);
-    @(posedge tx_done);
-    // Send second byte of command
-    tx_data = 8'haa;
-    trmt = 1;
-    @(posedge clk);
-    trmt = 0;
-    @(posedge rdy);
-    @(posedge tx_done);
-    // Send third byte of command
-    tx_data = 8'he3;
-    trmt = 1;
-    @(posedge clk);
-    trmt = 0;
-    @(posedge rdy);
     @(posedge cmd_rdy);
+    @(posedge tx_done);
     // Check that command was successfully read
     if(cmd != 24'h55aae3)
         fail = 1;
@@ -53,7 +39,7 @@ initial begin
     @(posedge clk);
     clr_cmd_rdy = 0;
     @(posedge clk);
-    if(clr_rdy)
+    if(cmd_rdy)
         fail = 1;
     // Check that rst_n works properly
     rst_n = 0;
