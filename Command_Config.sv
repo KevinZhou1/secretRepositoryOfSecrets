@@ -1,6 +1,7 @@
 module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, capture_done, RAM_rdata,
                       SPI_data, wrt_SPI, ss, clr_cmd_rdy, resp_data, send_resp, trig_pos,
-					  trig_cfg, decimator, dump, dump_ch, set_capture_done);
+					  trig_cfg, decimator, dump, dump_ch, set_capture_done, ch1_AFEgain,
+                      ch2_AFEgain, ch3_AFEgain);
   ////////////////////////////////////////////////////////////////
   //This module reads in commands and controls rclk and adc_clk//
   //////////////////////////////////////////////////////////////
@@ -18,6 +19,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
   output logic [3:0] decimator;
   output logic [1:0] dump_ch;
   output logic dump;
+  output logic [2:0] ch1_AFEgain, ch2_AFEgain, ch3_AFEgain;
 
   logic set_command;
   logic [23:0] command;
@@ -113,6 +115,14 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
           wrt_SPI = 1;
           ss = {1'b0,command[9:8]};
           SPI_data = AFEgainSPI;
+          case(command[9:8])
+            2'b10:
+              ch1_AFEgain = AFEgainSPI[5:3];
+            2'b10:
+              ch2_AFEgain = AFEgainSPI[5:3];
+            2'b11:
+              ch3_AFEgain = AFEgainSPI[5:3];
+          endcase
         end else if((command[23:16] == TRIG_LVL) && (command[7:0] >= 46) && (command[7:0] <= 201)) begin
           // Set trigger level. This command is used to set the trigger level.
           // The value in the 3rdbyte (8’hLL) determines the trigger level.

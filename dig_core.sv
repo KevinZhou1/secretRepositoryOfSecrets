@@ -61,14 +61,13 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   
   ADC_Capture iADC_Cap(.clk(clk), .rst_n(rst_n), .trig1(trig1), .trig2(trig2), .trig_en(trig_en),
                        .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .addr_ptr(addr_ptr),
-                       .capture_done(capture_done), .decimator(decimator), .dump(dump),
-                       .dump_fin(dumpDone), .trig_cfg(trig_cfg));
-
+                       .set_capture_done(set_capture_done), .decimator(decimator), .dump(dump),
+                       .dump_fin(dumpDone), .trig_cfg(trig_cfg), .we(cap_we), .en(cap_en));
 
   RAMInterface iRAM_Int(.clk(clk), .rst_n(rst_n), .rclk(rclk), .ch1_rdata(ch1_rdata),
-                         .ch2_rdata(ch2_rdata), .ch3_rdata(ch3_rdata), .addr_ptr(addr_ptr),
-                         .capture_done(capture_done), .ch_sel(ch_sel), .cap_en(), .cap_we(),
-                         .en(en), .we(we), .addr(addr), .read_data(RAM_rdata), .dump_en(dump_en));
+                         .ch2_rdata(ch2_rdata), .ch3_rdata(ch3_rdata),
+                         .ch_sel(ch_sel), .cap_en(cap_en), .cap_we(cap_we),
+                         .en(en), .we(we), .read_data(RAM_rdata), .dump_en(dump_en));
 
   Command_Config iCNC(.clk(clk), .rst_n(rst_n), .SPI_done(SPI_done), .EEP_data(EEP_data),
                       .cmd(cmd), .cmd_rdy(cmd_rdy), .resp_sent(resp_sent),
@@ -76,12 +75,13 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
                       .wrt_SPI(wrt_SPI), .ss(ss), .clr_cmd_rdy(clr_cmd_rdy), 
                       .resp_data(resp_data), .send_resp(send_resp),
                       .trig_pos(trig_pos), .trig_cfg(trig_cfg),
-                      .decimator(decimator), .dump(dump), .dump_ch(dump_ch));
+                      .decimator(decimator), .dump(dump), .dump_ch(dump_ch), .ch1_AFEGain(ch1_AFEGain),
+                      .ch2_AFEGain(ch2_AFEGain), .ch3_AFEGain(ch3_AFEGain));
 
   DSM dsm(.clk(clk), .rst_n(rst_n), .rclk(rclk), .addr(addr_ptr), .incAddr(),
-          .channel(), .ch_sel(ch_sel), .ch1_AFEGain(), .ch2_AFEGain(),
-          .ch3_AFEGain(), .startDump(dump), .startUARTresp(send_resp), .startSPI(wrt_SPI),
+          .channel(dump_ch), .ch_sel(ch_sel), .ch1_AFEGain(ch1_AFEGain), .ch2_AFEGain(ch2_AFEGain),
+          .ch3_AFEGain(ch3_AFEGain), .startDump(dump), .startUARTresp(send_resp), .startSPI(wrt_SPI),
           .SPIrdy(SPI_done), .UARTrdy(resp_sent), .dumpDone(dump_fin),
-          .flopGain(), .flopOffset(), .spiTXdata(SPI_data));
+          .flopGain(flopGain), .flopOffset(flopOffset), .spiTXdata(SPI_data));
   
 endmodule
