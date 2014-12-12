@@ -102,7 +102,7 @@ module dumpSM(clk, rst_n, rclk, addr, incAddr, channel, ch_sel, ch1_AFEGain,
         flopGain = 1;
         spiTXdata = {2'b00, ch_sel, ggg, 9'b0_0000_0000};
         startSPI = 1;
-        nextState = READJUNK;
+        nextState = EEPROMWAIT;
       end
       EEPROMWAIT: if(~SPIrdy)
         nextState = EEPROMWAIT;
