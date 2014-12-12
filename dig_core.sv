@@ -34,6 +34,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   // Interconnects between modules...declare any wire types you need here//
   ////////////////////////////////////////////////////////////////////////
   wire trig_en;                                 // Enable signal from Command to Capture
+  wire incAddr;                                 // Signal to inc the addr_ptr from the DSM to the ADC_SM
   wire capture_done;                            // Signal from capture module that it has triggered and capture is complete
   wire clr_cap_done;                            // Signal to clear current capture status on the Capture module
   wire [8:0] addr_ptr;                          // Current address from the Capture module
@@ -54,6 +55,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   end
   
   assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
+  assign addr = addr_ptr;
   
   ///////////////////////////////////////////////////////
   // Instantiate the blocks of your digital core next //
@@ -78,7 +80,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
                       .decimator(decimator), .dump(dump), .dump_ch(dump_ch), .ch1_AFEGain(ch1_AFEGain),
                       .ch2_AFEGain(ch2_AFEGain), .ch3_AFEGain(ch3_AFEGain));
 
-  DSM dsm(.clk(clk), .rst_n(rst_n), .rclk(rclk), .addr(addr_ptr), .incAddr(),
+  DSM dsm(.clk(clk), .rst_n(rst_n), .rclk(rclk), .addr(addr_ptr), .incAddr(incAddr),
           .channel(dump_ch), .ch_sel(ch_sel), .ch1_AFEGain(ch1_AFEGain), .ch2_AFEGain(ch2_AFEGain),
           .ch3_AFEGain(ch3_AFEGain), .startDump(dump), .startUARTresp(send_resp), .startSPI(wrt_SPI),
           .SPIrdy(SPI_done), .UARTrdy(resp_sent), .dumpDone(dump_fin),

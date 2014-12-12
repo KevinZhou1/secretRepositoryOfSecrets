@@ -1,5 +1,5 @@
 module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap_done,
-                   decimator, addr_ptr, set_capture_done, dump, dump_fin, trig_cfg, we, en);
+                   decimator, addr_ptr, set_capture_done, dump, dump_fin, trig_cfg, we, en, incAddr);
   /////////////////////////////////////////////////////////////////
   //This module controls the flow of data capture from the ADCs.//
   //Contains arming logic that determines if it can trigger.   //
@@ -15,6 +15,7 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   input [4:0] decimator;
   input dump;
   input dump_fin; // dump finished
+  input incAddr;  //External signal to increment the addr_ptr
   output logic [8:0] addr_ptr;
   output logic set_capture_done;
   output we, en;
@@ -91,7 +92,7 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n)
       addr_ptr <= 16'h0000;
-    else if(keep_ff) // Wait one clock cycle after write to increment address
+    else if(keep_ff|incAddr) // Wait one clock cycle after write to increment address
       addr_ptr <= addr_ptr + 1;
   end
 
