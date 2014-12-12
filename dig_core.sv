@@ -77,7 +77,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
                        .set_capture_done(set_capture_done), .decimator(decimator), .dump(dump),
                        .dump_fin(dumpDone), .trig_cfg(trig_cfg), .we(cap_we), .en(cap_en));
 
-  RAMInterface iRAM_Int(.clk(clk), .rst_n(rst_n), .rclk(rclk), .ch1_rdata(ch1_rdata),
+  RAM_Interface iRAM_Int(.clk(clk), .rst_n(rst_n), .rclk(rclk), .ch1_rdata(ch1_rdata),
                          .ch2_rdata(ch2_rdata), .ch3_rdata(ch3_rdata),
                          .ch_sel(ch_sel), .cap_en(cap_en), .cap_we(cap_we),
                          .en(en), .we(we), .read_data(RAM_rdata), .dump_en(dump_en));
