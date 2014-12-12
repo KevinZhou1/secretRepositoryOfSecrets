@@ -64,7 +64,6 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
                       .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .trig_en(trig_en),
                       .trig_cfg(trig_cfg), .decimator(decimator), .dump(dump));
   
-  
 endmodule
 
 module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
@@ -389,7 +388,7 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
           nextState = UART;
           send_resp = 1;
           if(SPI_data[14]) // Sent SPI, indicate positive response
-            resp_data = 7'hA5;
+            resp_data = 8'hA5;
           else // Send calibration EEPROM data
             resp_data = EEP_data;
         end else
