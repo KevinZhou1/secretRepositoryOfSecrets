@@ -77,7 +77,11 @@ module dumpSM(clk, rst_n, rclk, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2
 
   /////////////////////////////////////////////////////////////////
   //Our wonderful state machine.                                //
-  //////////////////////////////////////////////////////////////
+  //State flow is mostly controlled implicitly by the ready    //
+  // conditions of the UART and SPI modules.  It is assumed   //
+  //that the RAM reads will have settled by the time the UART//
+  //is ready to transmit again.                             //
+  ///////////////////////////////////////////////////////////
   always @(*) begin
   //Default state output values.
     flopIn = 0;
