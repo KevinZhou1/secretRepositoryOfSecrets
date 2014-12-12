@@ -67,8 +67,8 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   
 endmodule
 
-module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
-                   decimator, addr_ptr, capture_done, dump, trig_cfg);
+module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap_done,
+                   decimator, addr_ptr, set_capture_done, dump, trig_cfg, we, en);
   /////////////////////////////////////////////////////////////////
   //This module controls the flow of data capture from the ADCs.//
   //Contains arming logic that determines if it can trigger.   //
@@ -77,26 +77,27 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   input clk, rst_n;
   input trig1, trig2;
   input trig_en;
+  input adc_clk;
   input [8:0] trig_pos;
   input [7:0] trig_cfg;
   input clr_cap_done;
   input [4:0] decimator;
   input dump;
   output logic [8:0] addr_ptr;
-  output logic capture_done;
+  output logic set_capture_done;
+  output we, en;
 
-  typedef enum logic [2:0] { IDLE, WRT, SMPL, TRIG, DONE, DUMP } state_t;
+  typedef enum logic [2:0] { IDLE, WRT, WRT2, DONE, DUMP } state_t;
   state_t currentState, nextState;
 
   logic clr_cnt;
   logic [15:0] smpl_cnt, trig_cnt;
   logic [14:0] wait_cnt;
-  logic en_smpl_cnt, en_trig_cnt;
-  logic armed;
   logic [7:0] trace_end;
-  logic write;
   logic en_wait_cnt;
+  logic keep_ff;
   logic dumpDump; // indicates whether dump is complete
+  wire armed, keep, en_trig_cnt, en_smpl_cnt;
 
   // TRIGGER LOGIC
   logic triggerPreFF, trigger_FF1, trigger_FF2, trigger_FF3; 
@@ -106,6 +107,8 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
 
   assign trigSrc = trig_cfg[0];
   assign trigEdge = trig_cfg[4];
+  assign autoroll = trig_cfg[3] & !trig_cfg[2];
+  assign capture_done = trig_cfg[5];
   
   //The SR flop input mechanism and the trigger conditions AND gate.
   //Consider moving SR logic to the flop block.
@@ -119,21 +122,24 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   assign triggerPreFF = (trigSrc)	?	trig2	:	trig1;
 
   //Trigger edge selection mux.
-  assign trig_set = trig_cfg[3] || ((trigEdge)	?	trigPos	:	trigNeg);
+  assign trig_set = (trigEdge)	?	trigPos	:	trigNeg;
 
   /////////////////////////////////////////////////
   //Meta-stability flopping of trigger inputs.  //
   //Extra flop to use in edge detection logic. //
-  //////////////////////////////////////////////
+  //Also flops keep_ff                        //
+  /////////////////////////////////////////////
   always @(posedge clk, negedge rst_n)begin
     if(~rst_n)begin
-      trigger_FF1 <= 0;
-      trigger_FF2 <= 0;
-      trigger_FF3 <= 0;
+      trigger_FF1 <= 1'b0;
+      trigger_FF2 <= 1'b0;
+      trigger_FF3 <= 1'b0;
+      keep_ff <= 1'b0;
     end else begin
       trigger_FF1 <= triggerPreFF;
       trigger_FF2 <= trigger_FF1;
       trigger_FF3 <= trigger_FF2;
+      keep_ff <= keep;
     end
   end
 
@@ -148,9 +154,9 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   end
   // END TRIGGER LOGIC
   // MAIN LOGIC
-  ////////////////////////////////////////
-  // Following code is the state flops //
-  //////////////////////////////////////
+  ///////////////////
+  // State flops //
+  ////////////////
   always @(posedge clk, negedge rst_n) begin
     if(!rst_n)
       currentState <= IDLE;
@@ -188,13 +194,10 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n) begin
       wait_cnt <= 15'h0000;
-      write <= 1'b0;
-    end else if(wait_cnt == 1 << (decimator) - 1) begin
-      write <= 1'b1;
+    end else if(keep) begin
       wait_cnt <= 15'h0000;
     end else if(en_wait_cnt) begin
       wait_cnt <= wait_cnt + 1;
-      write <= 1'b0;
     end
   end
   
@@ -204,54 +207,43 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n)
       addr_ptr <= 16'h0000;
-    else if(write)
+    else if(keep_ff) // Wait one clock cycle after write to increment address
       addr_ptr <= addr_ptr + 1;
   end
+
+  // Decide whether or not to keep/write sample based on decimator
+  assign keep = (wait_cnt == (1 << decimator) - 1) ? 1'b1 : 1'b0;
   
+  assign en_trig_cnt = (triggered | autoroll&armed)&keep;
+  
+  assign en_smpl_cnt = !triggered&keep;
+  
+  assign armed = (smpl_cnt + trig_pos >= 512) ? 1'b1 : 1'b0;
+  
+  assign we = keep;
+  assign en = keep;
+
   // STATE MACHINE ftw
   always_comb begin
     clr_cnt = 1'b0;
-    en_trig_cnt = 1'b0;
-    en_smpl_cnt = 1'b0;
-    en_wait_cnt = 1'b0;
     nextState = IDLE;
+    set_capture_done = 1'b0;
     case(currentState)
       IDLE :  begin
-        if(trig_en) begin
-          armed = 0;
+        if(trig_en & adc_clk) begin // I'm not sure if this is actually correct
+        // The slides say Normal or Auto mode and I really don't get it
           nextState = WRT;
-          clr_cnt = 1;
-        end
-        else if(dump) begin
+          clr_cnt = 1'b1;
+        end else if(dump) begin
           nextState = DUMP;
         end
-      end DUMP : begin // Wait for channel dump to finish
-        if(dumpDump)
-          nextState = IDLE;
-        else
-          nextState = DUMP;
       end WRT : begin
-        en_wait_cnt = 1;
-        if(!write) begin
-          nextState = WRT;
-        end else if(triggered) begin
-          nextState = TRIG;
-          en_trig_cnt = 1;
-        end
-        else begin
-          nextState = SMPL;
-          en_smpl_cnt = 1;
-        end
-      end SMPL : begin
-        nextState = WRT;
-        if(smpl_cnt + trig_pos == 512) begin
-          armed = 1; // Currently 1-clock cycle armed signal
-        end
-      end TRIG : begin
+        en_wait_cnt = 1'b1; // Count half the time
+        nextState = WRT2;
+      end WRT2 : begin
         if(trig_cnt == trig_pos) begin
+          set_capture_done = 1'b1;
           nextState = DONE;
-          capture_done = 1;
-          trace_end = addr_ptr;
         end else
           nextState = WRT;
       end DONE : begin
@@ -259,8 +251,13 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
           nextState = DONE;
         else begin
           nextState = IDLE;
-          armed = 0;
-        end end
+        end
+      end DUMP : begin // Wait for channel dump to finish
+        if(dumpDump)
+          nextState = IDLE;
+        else
+          nextState = DUMP;
+      end 
       endcase
   end
   // END MAIN LOGIC
@@ -270,7 +267,8 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
 endmodule
 
 
-module RAM_Interface(clk, rst_n, ch1_rdata, ch2_rdata, ch3_rdata, addr_ptr, capture_done, en, we, addr, RAM_rdata);
+module RAM_Interface(clk, rst_n, ch1_rdata, ch2_rdata, ch3_rdata, addr_ptr,
+                     capture_done, rclk, en, we, addr, RAM_rdata);
   //////////////////////////////////////////////////////////////
   //Control of the commands to the RAM blocks that record and//
   //return ADC data.                                        //
@@ -279,6 +277,7 @@ module RAM_Interface(clk, rst_n, ch1_rdata, ch2_rdata, ch3_rdata, addr_ptr, capt
   input [7:0] ch1_rdata, ch2_rdata, ch3_rdata;
   input [8:0] addr_ptr;
   input capture_done;
+  input rclk;
   output en, we;
   output [8:0] addr;
   output [7:0] RAM_rdata;
@@ -288,13 +287,14 @@ endmodule
 
 module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, capture_done, RAM_rdata,
                       adc_clk, rclk, SPI_data, wrt_SPI, ss, clr_cmd_rdy, resp_data, send_resp, trig_pos,
-					  trig_cfg, decimator, dump, dump_ch);
+					  trig_cfg, decimator, dump, dump_ch, set_capture_done);
   ////////////////////////////////////////////////////////////////
   //This module reads in commands and controls rclk and adc_clk//
   //////////////////////////////////////////////////////////////
   input clk, rst_n, SPI_done, cmd_rdy, capture_done, resp_sent;
   input [7:0] EEP_data, RAM_rdata;
   input [23:0] cmd;
+  input set_capture_done;
 
   output logic adc_clk, rclk, wrt_SPI, clr_cmd_rdy, send_resp;
   output logic [2:0] ss;
@@ -309,6 +309,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
   logic set_command;
   logic [23:0] command;
   logic [15:0] AFEgainSPI; //Serves as the output of a LUT for the possible gain settings
+  logic wrt_trig_cfg;
 
   typedef enum logic [1:0] { IDLE, CMD, SPI, UART } state_t;
   state_t currentState, nextState;
@@ -359,6 +360,16 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
       command <= cmd[23:0];
   end
 
+  // trig_cfg logic
+  always_comb begin
+    if(!rst_n)
+      trig_cfg = 8'h00;
+    else if(set_capture_done)
+      trig_cfg[5] = 1;
+    else if(wrt_trig_cfg)
+      trig_cfg = {2'b00, command[13:8]};
+  end
+
   //////////////////////////////////////////////////////////////////////
   //Our wonderful state machine.  CMD is a one cycle command         //
   //decode state.  SPI waits for the spi transaction to complete    //
@@ -370,6 +381,7 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
     clr_cmd_rdy = 0;
     wrt_SPI = 0;
     send_resp = 0;
+    wrt_trig_cfg = 0;
     case(currentState)
       IDLE: if(cmd_rdy) begin
           nextState = CMD;
@@ -425,7 +437,7 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
           // Write trig_cfg register. This command is used to clear the capture_donebit (bit[5] = d).
           // This command is also used to configure the trigger parameters (edge, trigger type, channel)
           // <DONE>
-          trig_cfg = {2'b00, command[13:8]};
+          wrt_trig_cfg = 1;
           nextState = IDLE;
         end else if(command[23:16] == TRIG_RD) begin
           // Read trig_cfg register. The trig_cfg register is sent out the UART.
