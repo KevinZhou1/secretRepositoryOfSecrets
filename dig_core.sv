@@ -48,7 +48,8 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   
   ADC_Capture iADC_Cap(.clk(clk), .rst_n(rst_n), .trig1(trig1), .trig2(trig2), .trig_en(trig_en),
                        .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .addr_ptr(addr_ptr),
-                       .capture_done(capture_done), .decimator(decimator), .dump(dump));
+                       .capture_done(capture_done), .decimator(decimator), .dump(dump),
+                       .trig_cfg(trig_cfg));
 
 
   RAM_Interface iRAM_Int(.clk(clk), .rst_n(rst_n), .ch1_rdata(ch1_rdata), .ch2_rdata(ch2_rdata),
@@ -62,12 +63,12 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
                       .rclk(rclk), .SPI_data(SPI_data), .wrt_SPI(wrt_SPI), .ss(ss), 
                       .clr_cmd_rdy(clr_cmd_rdy), .resp_data(resp_data), .send_resp(send_resp),
                       .trig_pos(trig_pos), .trig_cfg(trig_cfg),
-                      .decimator(decimator), .dump(dump));
+                      .decimator(decimator), .dump(dump), .dump_ch(dump_ch));
   
 endmodule
 
 module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
-                   decimator, addr_ptr, capture_done, dump);
+                   decimator, addr_ptr, capture_done, dump, trig_cfg);
   /////////////////////////////////////////////////////////////////
   //This module controls the flow of data capture from the ADCs.//
   //Contains arming logic that determines if it can trigger.   //
@@ -77,15 +78,16 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   input trig1, trig2;
   input trig_en;
   input [8:0] trig_pos;
+  input [7:0] trig_cfg;
   input clr_cap_done;
   input [4:0] decimator;
   input dump;
   output logic [8:0] addr_ptr;
   output logic capture_done;
-  
-  typedef enum logic [2:0] { IDLE, WRT, SMPL, TRIG, DONE } state_t;
+
+  typedef enum logic [2:0] { IDLE, WRT, SMPL, TRIG, DONE, DUMP } state_t;
   state_t currentState, nextState;
-  
+
   logic clr_cnt;
   logic [15:0] smpl_cnt, trig_cnt;
   logic [14:0] wait_cnt;
@@ -94,7 +96,58 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
   logic [7:0] trace_end;
   logic write;
   logic en_wait_cnt;
+  logic dumpDump; // indicates whether dump is complete
+
+  // TRIGGER LOGIC
+  logic triggerPreFF, trigger_FF1, trigger_FF2, trigger_FF3; 
+  logic trigPos, trigNeg;
+  logic trigLogic, trig_set;
+  logic triggered;
+
+  assign trigSrc = trig_cfg[0];
+  assign trigEdge = trig_cfg[4];
   
+  //The SR flop input mechanism and the trigger conditions AND gate.
+  //Consider moving SR logic to the flop block.
+  assign trigLogic = ~(capture_done|~((trig_set&armed&trig_en)|triggered));
+
+  //Edge detection on the selected trigger source.
+  assign trigPos = trigger_FF2&(~trigger_FF3);
+  assign trigNeg = (~trigger_FF2)&trigger_FF3;
+
+  //Trigger source selection mux.
+  assign triggerPreFF = (trigSrc)	?	trig2	:	trig1;
+
+  //Trigger edge selection mux.
+  assign trig_set = trig_cfg[3] || ((trigEdge)	?	trigPos	:	trigNeg);
+
+  /////////////////////////////////////////////////
+  //Meta-stability flopping of trigger inputs.  //
+  //Extra flop to use in edge detection logic. //
+  //////////////////////////////////////////////
+  always @(posedge clk, negedge rst_n)begin
+    if(~rst_n)begin
+      trigger_FF1 <= 0;
+      trigger_FF2 <= 0;
+      trigger_FF3 <= 0;
+    end else begin
+      trigger_FF1 <= triggerPreFF;
+      trigger_FF2 <= trigger_FF1;
+      trigger_FF3 <= trigger_FF2;
+    end
+  end
+
+  //////////////////////////////////////////////
+  //Flop at the core of the SR-flop logic.   //
+  ////////////////////////////////////////////
+  always @(posedge clk, negedge rst_n)begin
+    if(~rst_n)
+      triggered <= 0;
+    else
+      triggered <= trigLogic;
+  end
+  // END TRIGGER LOGIC
+  // MAIN LOGIC
   ////////////////////////////////////////
   // Following code is the state flops //
   //////////////////////////////////////
@@ -155,25 +208,33 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
       addr_ptr <= addr_ptr + 1;
   end
   
-  
+  // STATE MACHINE ftw
   always_comb begin
     clr_cnt = 1'b0;
     en_trig_cnt = 1'b0;
     en_smpl_cnt = 1'b0;
     en_wait_cnt = 1'b0;
-    armed = 1'b0;
     nextState = IDLE;
     case(currentState)
       IDLE :  begin
         if(trig_en) begin
+          armed = 0;
           nextState = WRT;
           clr_cnt = 1;
         end
+        else if(dump) begin
+          nextState = DUMP;
+        end
+      end DUMP : begin // Wait for channel dump to finish
+        if(dumpDump)
+          nextState = IDLE;
+        else
+          nextState = DUMP;
       end WRT : begin
         en_wait_cnt = 1;
         if(!write) begin
           nextState = WRT;
-        end else if(trig1 || trig2) begin
+        end else if(triggered) begin
           nextState = TRIG;
           en_trig_cnt = 1;
         end
@@ -202,6 +263,10 @@ module ADC_Capture(clk, rst_n, trig1, trig2, trig_en, trig_pos, clr_cap_done,
         end end
       endcase
   end
+  // END MAIN LOGIC
+  // BEGIN DUMP LOGIC
+  
+  // END DUMP LOGIC
 endmodule
 
 
@@ -223,7 +288,10 @@ endmodule
 
 module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, capture_done, RAM_rdata,
                       adc_clk, rclk, SPI_data, wrt_SPI, ss, clr_cmd_rdy, resp_data, send_resp, trig_pos,
-					  trig_cfg, decimator, dump);
+					  trig_cfg, decimator, dump, dump_ch);
+  ////////////////////////////////////////////////////////////////
+  //This module reads in commands and controls rclk and adc_clk//
+  //////////////////////////////////////////////////////////////
   input clk, rst_n, SPI_done, cmd_rdy, capture_done, resp_sent;
   input [7:0] EEP_data, RAM_rdata;
   input [23:0] cmd;
@@ -235,6 +303,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
   output logic [15:0] SPI_data;
   output logic [7:0] trig_cfg;
   output logic [3:0] decimator;
+  output logic [1:0] dump_ch;
   output logic dump;
 
   logic set_command;
@@ -309,6 +378,7 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
           ss = 3'b000;
           set_command = 1;
           dump = 0;
+          dump_ch = 2'b00;
         end else begin
           nextState = IDLE;
         end
@@ -317,6 +387,7 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
           // of the 2ndbyte.
           // cc=00 implies channel 1, cc=10 implies channel 3. and cc=11 is reserved
           dump = 1;
+          dump_ch = command[9:8];
           clr_cmd_rdy = 1;
           nextState = IDLE;
         end else if(command[23:16] == CFG_GAIN) begin
