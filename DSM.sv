@@ -1,22 +1,35 @@
-module dumpSM(clk, rst_n, rclk, addr, incAddr, channel, ch_sel, ch1_AFEGain,
-              ch2_AFEGain, ch3_AFEGain, startDump, startUARTresp, startSPI,
-              SPIrdy, UARTrdy, dumpDone, flopGain, flopOffset, spiTXdata);
+module dumpSM(clk, rst_n, rclk, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2_AFEGain, ch3_AFEGain, startDump, startUARTresp, startSPI, SPIrdy, UARTrdy, dumpDone, flopGain, flopOffset, spiTXdata);
 
   input clk, rst_n, rclk, startDump, SPIrdy, UARTrdy;
+  //startDump, input to kick off dump SM
+  //SPIrdy, input to tell the SM that the SPI is ready to transmit
+  //UARTrdy, input to tell the SM that the UART is ready to transmit
   input [1:0] channel;
+  //channel, What channel are we dumping?  Can be pulled from the host command
   input [2:0] ch1_AFEGain, ch2_AFEGain, ch3_AFEGain;
-  input [7:0] addr;
+  //chX_AFEGain, outputs of the AFEGain state registers.  Used in forming EEPROM SPI commands.
+  input [8:0] addr;
+  //addr, The addr counter. Captured for comparison whech checking if we are done
 
   output logic startUARTresp, startSPI;
+  //Outputs to kisck off UART and SPI transactions
+
   output logic dumpDone;
+  //dumpDone, signal that the dump is complete
   output logic flopGain;
   output logic flopOffset;
+  //flopGain, flopOffset, Signals to the gain and offset registers that gain or offset is available on the SPI data out.
   output logic incAddr;
+  //incAddr, signal to increment the address register
   output logic [1:0] ch_sel;  //Flops in the channel select.
+  //ch_sel, flopped copy of which channel is being dumped, routed to the RAMInterface to select which RAM output we want.
   output logic [15:0] spiTXdata;
+  //spiTXdata, the SPI command for the EEPROM
 
-  logic [2:0] ggg;
+  logic [2:0] ggg;        //The gain code of the channel selected for dumping.  Used to construct spiTXdata.
   logic [8:0] startAddr;  //Captures the starting addr at begining for comparison.
+  
+  logic flopIn;  //Signal from SM to capture the addr and channel values.
   
   typedef enum reg [3:0] { IDLE, READGAIN, READOFFSET, READJUNK, EEPROMWAIT, UARTSEND, INC, CHECK, DONE} state_t; 
   state_t currentState, nextState;   // State registers
@@ -36,8 +49,6 @@ module dumpSM(clk, rst_n, rclk, addr, incAddr, channel, ch_sel, ch1_AFEGain,
     else
       currentState <= nextState;
   end
-  
-  logic flopIn;
 
   ////////////////////////////////////////////////////////////////
   //Flop to capture the channel on an incoming dump CMD.       //
