@@ -12,7 +12,7 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   input [8:0] trig_pos;
   input [7:0] trig_cfg;
   input clr_cap_done;
-  input [4:0] decimator;
+  input [3:0] decimator;
   input dump;
   input dump_fin; // dump finished
   input incAddr;  //External signal to increment the addr_ptr
@@ -54,9 +54,9 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   /////////////////////
   always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n)
-      smpl_cnt <= 4'h0;
+      smpl_cnt <= 16'h0000;
     else if(clr_cnt)
-      smpl_cnt <= 4'h0;
+      smpl_cnt <= 16'h0000;
     else if(en_smpl_cnt)
       smpl_cnt <= smpl_cnt + 1;
   end
@@ -66,9 +66,9 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   /////////////////////
   always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n)
-      trig_cnt <= 4'h0;
+      trig_cnt <= 16'h0000;
     else if(clr_cnt)
-      trig_cnt <= 4'h0;
+      trig_cnt <= 16'h0000;
     else if(en_trig_cnt)
       trig_cnt <= trig_cnt + 1;
   end
@@ -110,9 +110,11 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
 
   // STATE MACHINE ftw
   always_comb begin
-    clr_cnt = 1'b0;
+    //Default signals
+	clr_cnt = 1'b0;
     nextState = IDLE;
     set_capture_done = 1'b0;
+    en_wait_cnt = 1'b0;
     case(currentState)
       IDLE :  begin
         if((|trig_cfg[3:2]) & adc_clk) begin
