@@ -37,6 +37,17 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   wire incAddr;                                 // Signal to inc the addr_ptr from the DSM to the ADC_SM
   wire capture_done;                            // Signal from capture module that it has triggered and capture is complete
   wire clr_cap_done;                            // Signal to clear current capture status on the Capture module
+  wire set_capture_done;
+  wire dump;
+  wire dumpDone;
+  wire cap_en, cap_en;
+  wire dump_en;
+  wire dump_fin;
+  wire flopGain;
+  wire flopOffset;
+  wire [1:0] ch_sel;
+  wire [1:0] dump_ch;
+  wire [2:0] ch1_AFEGain, ch2_AFEGain, ch3_AFEGain;
   wire [8:0] addr_ptr;                          // Current address from the Capture module
   wire [8:0] trig_pos;                          // The trigger position from the CNC to the Capture
   wire [7:0] RAM_rdata;                         // Data from RAM Interface to CNC
