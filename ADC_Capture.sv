@@ -30,7 +30,10 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   logic en_wait_cnt;
   logic keep_ff;
   logic dumpDump; // indicates whether dump is complete
-  wire armed, keep, en_trig_cnt, en_smpl_cnt;
+  logic armed, keep, en_trig_cnt, en_smpl_cnt;
+  logic triggered;
+  logic autoroll;
+  logic capture_done;
 
   TriggerLogic trigLogic(.clk(clk), .rst_n(rst_n), .trig1(trig1), .trig2(trig2),
                        .trig_cfg(trig_cfg), .armed(armed), .trig_en(trig_en),

@@ -42,6 +42,7 @@ module triggerModule(clk, rst_n, trig1, trig2, trig_cfg, armed, trig_en, set_cap
   logic triggerPreFF, trigger_FF1, trigger_FF2, trigger_FF3; 
   logic trigPos, trigNeg;
   logic trigLogic, trig_set;
+  logic trigSrc, trigEdge, capture_done;
 
   assign trigSrc = trig_cfg[0];
   assign trigEdge = trig_cfg[4];
