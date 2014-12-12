@@ -5,18 +5,15 @@ reg RX; // UART input
 reg [7:0] tx_data; // UART input
 reg clr_cmd_rdy; // UART_comm input
 wire TX, tx_done; // UART outputs
-wire [7:0] rx_data; // UART outputs
 wire [23:0] cmd; // UART_comm output
 wire cmd_rdy; // UART_comm output
 reg fail;
 
 assign RX = TX;
 
-UART iUART(.RX(RX), .clr_rdy(clr_rdy), .trmt(trmt), .clk(clk), .rst_n(rst_n), 
-          .tx_data(tx_data), .TX(TX), .tx_done(tx_done), .rdy(rdy), .rx_data(rx_data));
-UART_comm iComm(.cmd_rdy(cmd_rdy), .clr_rdy(clr_rdy), .cmd(cmd), .clk(clk),
-                .rst_n(rst_n), .rdy(rdy), .clr_cmd_rdy(clr_cmd_rdy), .trmt(trmt),
-                .rx_data(rx_data));
+UART_comm iDUT(.cmd_rdy(cmd_rdy), .cmd(cmd), .TX(TX), .tx_done(tx_done),
+                .clk(clk), .rst_n(rst_n), .clr_cmd_rdy(clr_cmd_rdy),
+                .trmt(trmt), .RX(RX), .tx_data(tx_data));
 
 initial clk = 0;
 always

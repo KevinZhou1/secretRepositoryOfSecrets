@@ -1,11 +1,13 @@
-module UART_comm(cmd_rdy, clr_rdy, cmd, clk, rst_n, rdy, clr_cmd_rdy, trmt, rx_data);
+module UART_comm(cmd_rdy, cmd, TX, tx_done,
+                 clk, rst_n, clr_cmd_rdy, trmt, RX, tx_data);
 
-input [7:0] rx_data;
-input rdy, clr_cmd_rdy, trmt;
 input clk, rst_n;
+input clr_cmd_rdy, trmt;
+input RX; // UART input
+input reg [7:0] tx_data; // UART input
 output logic cmd_rdy;
-output clr_rdy;
 output reg [23:0] cmd;
+output TX, tx_done; // UART output
 
 typedef enum reg [1:0] { IDLE, WAIT, WRITE } state_t;
 state_t state, nxt_state;   // State registers
@@ -14,6 +16,14 @@ reg [1:0] cmd_byte_count; // Current cmd byte index
 reg write; // Enable a write of a byte of cmd
 reg write_done; // Indicate that reading of one byte is finished
 reg start, done;
+
+// UART module I/O
+reg clr_rdy;
+wire rdy;
+wire [7:0] rx_data;
+
+UART uart(.RX(RX), .clr_rdy(clr_rdy), .trmt(trmt), .clk(clk), .rst_n(rst_n), 
+          .tx_data(tx_data), .TX(TX), .tx_done(tx_done), .rdy(rdy), .rx_data(rx_data));
 
 // We've successfully read the rx values after the write to the cmd
 assign clr_rdy = write_done;
@@ -70,7 +80,7 @@ always_comb begin
     nxt_state = IDLE;
     case (state)
         IDLE : begin
-            if(trmt) begin // Begin reading in command
+            if(!RX) begin // Start bit: Begin reading in command
                 start = 1'b1;
                 nxt_state = WAIT;
             end
