@@ -40,7 +40,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   wire set_capture_done;
   wire dump;
   wire dumpDone;
-  wire cap_en, cap_en;
+  wire cap_we, cap_en;
   wire dump_en;
   wire dump_fin;
   wire flopGain;

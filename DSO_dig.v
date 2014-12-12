@@ -20,7 +20,7 @@ module DSO_dig(clk,rst_n,adc_clk,ch1_data,ch2_data,ch3_data,trig1,trig2,MOSI,MIS
   // Define any wires needed for interconnect here //
   //////////////////////////////////////////////////
   wire wrt_SPI, SPI_done, SS_n;
-  wire tx_done, 
+  wire tx_done;
   wire [2:0]ss;
   wire [15:0]SPI_cmd;
   wire [15:0]SPI_data_out;
