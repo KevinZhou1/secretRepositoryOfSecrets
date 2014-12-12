@@ -16,7 +16,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   // EEPROM SPI control signals
   output [15:0] SPI_data;						// typically a config command to digital pots or EEPROM
   output wrt_SPI;								// control signal asserted for 1 clock to initiate SPI transaction
-  output [2:0] ss;								// determines which Slave gets selected 000=>trig, 001-011=>chX_ss, 100=>EEP
+  output [2:0] ss;								// determines which Slave gets selected 000=>trig, 001-011=>chX_ss, 1XX=>EEP
   input SPI_done;								// asserted by SPI peripheral when finished transaction
   input [7:0] EEP_data;							// Formed from MISO from EEPROM.  only lower 8-bits needed from SPI periph
   output en,we;									// RAM block control signals (common to all 3 RAM blocks)
@@ -61,8 +61,8 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
                       .capture_done(capture_done), .RAM_rdata(RAM_rdata), .adc_clk(adc_clk),
                       .rclk(rclk), .SPI_data(SPI_data), .wrt_SPI(wrt_SPI), .ss(ss), 
                       .clr_cmd_rdy(clr_cmd_rdy), .resp_data(resp_data), .send_resp(send_resp),
-                      .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .trig_en(trig_en),
-                      .trig_cfg(trig_cfg), .decimator(decimator), .dump(dump));
+                      .trig_pos(trig_pos), .trig_cfg(trig_cfg),
+                      .decimator(decimator), .dump(dump));
   
 endmodule
 
@@ -223,12 +223,12 @@ endmodule
 
 module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, capture_done, RAM_rdata,
                       adc_clk, rclk, SPI_data, wrt_SPI, ss, clr_cmd_rdy, resp_data, send_resp, trig_pos,
-					  clr_cap_done, trig_en, trig_cfg, decimator, dump);
+					  trig_cfg, decimator, dump);
   input clk, rst_n, SPI_done, cmd_rdy, capture_done, resp_sent;
   input [7:0] EEP_data, RAM_rdata;
   input [23:0] cmd;
 
-  output logic adc_clk, rclk, wrt_SPI, clr_cmd_rdy, send_resp, clr_cap_done, trig_en;
+  output logic adc_clk, rclk, wrt_SPI, clr_cmd_rdy, send_resp;
   output logic [2:0] ss;
   output logic [7:0] resp_data;
   output logic [8:0] trig_pos;
@@ -317,6 +317,7 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
           // of the 2ndbyte.
           // cc=00 implies channel 1, cc=10 implies channel 3. and cc=11 is reserved
           dump = 1;
+          clr_cmd_rdy = 1;
           nextState = IDLE;
         end else if(command[23:16] == CFG_GAIN) begin
           // Configure analog gain of channel (this would correspond to volts/div on an opamp).
@@ -387,10 +388,10 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
           clr_cmd_rdy = 1;
           nextState = UART;
           send_resp = 1;
-          if(SPI_data[14]) // Sent SPI, indicate positive response
-            resp_data = 8'hA5;
-          else // Send calibration EEPROM data
+          if(!SPI_data[14] && ss[2]) // Send calibration EEPROM data
             resp_data = EEP_data;
+          else // Sent SPI, indicate positive response
+            resp_data = 8'hA5;
         end else
           nextState = SPI;
       UART: if(resp_sent) begin
