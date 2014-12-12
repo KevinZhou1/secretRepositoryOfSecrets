@@ -11,7 +11,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   // Universal signals
   input clk,rst_n;								// clock and active low reset
   // ADC control signals
-  output adc_clk,rclk;							// 20MHz clocks to ADC and RAM
+  output logic adc_clk,rclk;				    // 20MHz clocks to ADC and RAM
   input trig1,trig2;							// trigger inputs from AFE
   // EEPROM SPI control signals
   output [15:0] SPI_data;						// typically a config command to digital pots or EEPROM
@@ -42,6 +42,19 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   wire [7:0] trig_cfg;
   wire [3:0] decimator;
  
+ 
+   ////////////////////////////////////////////////////////
+  // Run rclk for interaction with channel RAM modules //
+  //////////////////////////////////////////////////////
+  always @(posedge clk, negedge rst_n) begin
+    if(!rst_n)
+      rclk <= 1'b0;
+    else
+      rclk <= ~rclk;
+  end
+  
+  assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
+  
   ///////////////////////////////////////////////////////
   // Instantiate the blocks of your digital core next //
   /////////////////////////////////////////////////////
@@ -59,9 +72,9 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
 
   Command_Config iCNC(.clk(clk), .rst_n(rst_n), .SPI_done(SPI_done), .EEP_data(EEP_data),
                       .cmd(cmd), .cmd_rdy(cmd_rdy), .resp_sent(resp_sent),
-                      .capture_done(capture_done), .RAM_rdata(RAM_rdata), .adc_clk(adc_clk),
-                      .rclk(rclk), .SPI_data(SPI_data), .wrt_SPI(wrt_SPI), .ss(ss), 
-                      .clr_cmd_rdy(clr_cmd_rdy), .resp_data(resp_data), .send_resp(send_resp),
+                      .capture_done(capture_done), .RAM_rdata(RAM_rdata), .SPI_data(SPI_data),
+                      .wrt_SPI(wrt_SPI), .ss(ss), .clr_cmd_rdy(clr_cmd_rdy), 
+                      .resp_data(resp_data), .send_resp(send_resp),
                       .trig_pos(trig_pos), .trig_cfg(trig_cfg),
                       .decimator(decimator), .dump(dump), .dump_ch(dump_ch));
 

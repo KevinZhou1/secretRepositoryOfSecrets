@@ -119,9 +119,8 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
           nextState = WRT;
           clr_cnt = 1'b1;
           trace_end = 8'h00;
-        end else if(dump) begin
+        end else if(dump)
           nextState = DUMP;
-        end
       end WRT : begin
         en_wait_cnt = 1'b1; // Count half the time
         nextState = WRT2;
@@ -135,9 +134,8 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
       end DONE : begin
         if(capture_done)
           nextState = DONE;
-        else begin
+        else
           nextState = IDLE;
-        end
       end DUMP : begin // Wait for channel dump to finish
         if(dumpDump)
           nextState = IDLE;

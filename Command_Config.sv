@@ -1,5 +1,5 @@
 module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, capture_done, RAM_rdata,
-                      adc_clk, rclk, SPI_data, wrt_SPI, ss, clr_cmd_rdy, resp_data, send_resp, trig_pos,
+                      SPI_data, wrt_SPI, ss, clr_cmd_rdy, resp_data, send_resp, trig_pos,
 					  trig_cfg, decimator, dump, dump_ch, set_capture_done);
   ////////////////////////////////////////////////////////////////
   //This module reads in commands and controls rclk and adc_clk//
@@ -9,7 +9,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
   input [23:0] cmd;
   input set_capture_done;
 
-  output logic adc_clk, rclk, wrt_SPI, clr_cmd_rdy, send_resp;
+  output logic wrt_SPI, clr_cmd_rdy, send_resp;
   output logic [2:0] ss;
   output logic [7:0] resp_data;
   output logic [8:0] trig_pos;
@@ -40,8 +40,6 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
   localparam EEP_WRT  = 8'h08;		// Write calibration EEP, 2nd byte is address, 3rd byte is data
   localparam EEP_RD   = 8'h09;		// Read calibration EEP, 2nd byte specifies address
 
-assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
-
   ////////////////////////////////////////
   // Following code is the state flops //
   //////////////////////////////////////
@@ -50,16 +48,6 @@ assign adc_clk = ~rclk; // adc_clk and rclk in opposite phases
       currentState <= IDLE;
     else
       currentState <= nextState;
-  end
-
-  ////////////////////////////////////////////////////////
-  // Run rclk for interaction with channel RAM modules //
-  //////////////////////////////////////////////////////
-  always @(posedge clk, negedge rst_n) begin
-    if(!rst_n)
-      rclk <= 1'b0;
-    else
-      rclk <= ~rclk;
   end
   
   ///////////////////////////////////////////////////////
