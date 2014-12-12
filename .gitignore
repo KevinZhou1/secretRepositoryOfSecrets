@@ -2,3 +2,5 @@
 *.mti
 *.mpf
 work/
+vsim.wlf
+*~

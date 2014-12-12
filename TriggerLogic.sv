@@ -31,16 +31,22 @@
 //  I do not know if there would be any problems, but I do not think settings should       //
 //  be changed once the trigger function is enabled.                                      //
 ///////////////////////////////////////////////////////////////////////////////////////////
-module triggerModule(clk, rst_n, trig1, trig2, trigSrc, trigEdge, armed, trig_en, set_capture_done, triggered);
+module triggerModule(clk, rst_n, trig1, trig2, trig_cfg, armed, trig_en, set_capture_done, triggered);
 
   input clk, rst_n;
-  input trig1, trig2, trigSrc, trigEdge, armed, trig_en, set_capture_done;
+  input trig1, trig2;
+  input [7:0] trig_cfg;
+  input armed, trig_en, set_capture_done;
   output logic triggered;
 
   logic triggerPreFF, trigger_FF1, trigger_FF2, trigger_FF3; 
   logic trigPos, trigNeg;
   logic trigLogic, trig_set;
 
+  assign trigSrc = trig_cfg[0];
+  assign trigEdge = trig_cfg[4];
+  assign capture_done = trig_cfg[5];
+  
   //The SR flop input mechanism and the trigger conditions AND gate.
   //Consider moving SR logic to the flop block.
   assign trigLogic = ~(set_capture_done|~((trig_set&armed&trig_en)|triggered));
@@ -53,7 +59,7 @@ module triggerModule(clk, rst_n, trig1, trig2, trigSrc, trigEdge, armed, trig_en
   assign triggerPreFF = (trigSrc)	?	trig2	:	trig1;
 
   //Trigger edge selection mux.
-  assign trig_set = (trigEdge)	?	trigPos	:	trigNeg;
+  assign trig_set = ((trigEdge)	?	trigPos	:	trigNeg);
 
   /////////////////////////////////////////////////
   //Meta-stability flopping of trigger inputs.  //
