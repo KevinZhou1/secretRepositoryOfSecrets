@@ -114,8 +114,7 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
     set_capture_done = 1'b0;
     case(currentState)
       IDLE :  begin
-        if(trig_en & adc_clk) begin // I'm not sure if this is actually correct
-        // The slides say Normal or Auto mode and I really don't get it
+        if((|trig_cfg[3:2]) & adc_clk) begin
           nextState = WRT;
           clr_cnt = 1'b1;
           trace_end = 8'h00;
