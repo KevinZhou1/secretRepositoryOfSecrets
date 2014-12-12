@@ -62,10 +62,9 @@ module DSO_dig(clk,rst_n,adc_clk,ch1_data,ch2_data,ch3_data,trig1,trig2,MOSI,MIS
   ///////////////////////////////////
   // Instantiate UART_comm module //
   /////////////////////////////////
-  //Note to self, restructure UART wrapper to be an actual wrapper
-  UART_comm iUART_comm(.cmd_rdy(cmd_rdy), .clr_rdy(clr_rdy), .cmd(cmd), .clk(clk), .rst_n(rst_n), .rdy(rdy), .clr_cmd_rdy(clr_cmd_rdy), .trmt(trmt), .rx_data(rx_data));
-  UART iUART(.RX(RX), .clr_rdy(clr_rdy), .trmt(trmt), .clk(clk), .rst_n(rst_n), 
-          .tx_data(resp_data), .TX(TX), .tx_done(resp_sent), .rdy(rdy), .rx_data(rx_data));
+  UART_comm iUART(.cmd_rdy(cmd_rdy), .cmd(cmd), .TX(TX), .tx_done(tx_done),
+                .clk(clk), .rst_n(rst_n), .clr_cmd_rdy(clr_cmd_rdy),
+                .trmt(trmt), .RX(RX), .tx_data(tx_data));
   
   ///////////////////////////
   // Instantiate dig_core //
