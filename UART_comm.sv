@@ -40,14 +40,10 @@ end
 always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n)
         cmd <= 24'h000000;
-    else if(clr_cmd_rdy)
+    else if(start)
         cmd <= 24'h000000;
-    else if(write && !cmd_byte_count) // Read in first byte
-        cmd[23:16] <= rx_data;
-    else if(write && cmd_byte_count[0]) // Read in second byte
-        cmd[15:8] <= rx_data;
-    else if(write && cmd_byte_count[1]) // Read in third byte
-        cmd[7:0] <= rx_data;
+    else if(write)
+        cmd <= {cmd[15:0], rx_data};
 end
 
 // Control cmd byte index

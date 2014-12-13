@@ -37,6 +37,7 @@ task send_UART_mstr_cmd;
     clr_resp_rdy = 1'b0;
     @(posedge clk);
     send_cmd = 1'b0;
+    @(posedge cmd_sent);
     end
 endtask
 
@@ -45,7 +46,7 @@ task send_cfg_gain_cmd;
     input [1:0] cc;  // channel select
     input valid;     //check for positive or negative ack?
     begin
-    send_UART_mstr_cmd({CFG_GAIN, 3'h0, ggg, cc});
+    send_UART_mstr_cmd({CFG_GAIN, 3'h0, ggg, cc, 8'hxx});
     if(valid)
         check_UART_pos_ack();
     else
