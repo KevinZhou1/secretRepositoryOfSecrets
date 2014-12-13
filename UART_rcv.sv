@@ -35,8 +35,8 @@ end
 
 // Bit counter
 always_ff @(posedge clk, negedge rst_n) begin
-		if (!rst_n)
-				bit_cnt <= 4'h0;
+    if (!rst_n)
+		bit_cnt <= 4'h0;
     else if (start)
         bit_cnt <= 4'h0;
     else if (shift)
@@ -72,11 +72,11 @@ assign shift = (baud_cnt == 7'h40);
 // Control rdy output
 always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n)
-        rdy = 1'b0;
+        rdy <= 1'b0;
 		else if(clr_rdy || receiving)
-        rdy = 1'b0;
+        rdy <= 1'b0;
     else if(done)
-        rdy = 1'b1;
+        rdy <= 1'b1;
 end
 
 always_ff @(posedge clk, negedge rst_n) begin

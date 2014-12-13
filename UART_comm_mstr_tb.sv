@@ -39,14 +39,14 @@ initial begin
     @(posedge resp_rdy);
     if(resp !== 8'h34) // Check third byte
         fail = 1;
-    repeat(2) @(posedge clk);
-    if(!cmd_sent)
-        fail = 1;
+    @(posedge cmd_sent);
     clr_resp_rdy = 1'b1;
     @(posedge clk);
     clr_resp_rdy = 1'b0;
+    @(posedge clk);
     if(resp_rdy) // Check that clr_resp_rdy works
         fail = 1;
+    @(posedge clk);
     // Check that rst_n works properly
     rst_n = 0;
     @(posedge clk);

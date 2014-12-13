@@ -38,7 +38,6 @@ initial begin
     clr_cmd_rdy = 1;
     @(posedge clk);
     clr_cmd_rdy = 0;
-    @(posedge clk);
     if(cmd_rdy)
         fail = 1;
     // Check that rst_n works properly
