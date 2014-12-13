@@ -4,7 +4,7 @@ module UART_comm(cmd_rdy, cmd, TX, tx_done,
 input clk, rst_n;
 input clr_cmd_rdy, trmt;
 input RX; // UART input
-input reg [7:0] tx_data; // UART input
+input [7:0] tx_data; // UART input
 output logic cmd_rdy;
 output reg [23:0] cmd;
 output TX, tx_done; // UART output

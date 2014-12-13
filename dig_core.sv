@@ -37,12 +37,27 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   wire incAddr;                                 // Signal to inc the addr_ptr from the DSM to the ADC_SM
   wire capture_done;                            // Signal from capture module that it has triggered and capture is complete
   wire clr_cap_done;                            // Signal to clear current capture status on the Capture module
+  wire set_capture_done;
+  wire dump;
+  wire dumpDone;
+  wire cap_we, cap_en;
+  wire dump_en;
+  wire dump_fin;
+  wire flopGain;
+  wire flopOffset;
+  wire wrt_SPICNC, wrt_SPIDSM;
+  wire [1:0] ch_sel;
+  wire [1:0] dump_ch;
+  wire [2:0] ch1_AFEGain, ch2_AFEGain, ch3_AFEGain;
   wire [8:0] addr_ptr;                          // Current address from the Capture module
   wire [8:0] trig_pos;                          // The trigger position from the CNC to the Capture
   wire [7:0] RAM_rdata;                         // Data from RAM Interface to CNC
   wire [7:0] trig_cfg;
   wire [3:0] decimator;
- 
+  wire [15:0] SPI_dataCNC, SPI_dataDSM; 
+
+  assign wrt_SPI = (wrt_SPICNC|wrt_SPIDSM);
+  assign SPI_data = (wrt_SPIDSM) ? SPI_dataDSM : SPI_dataCNC;
  
    ////////////////////////////////////////////////////////
   // Run rclk for interaction with channel RAM modules //
@@ -66,24 +81,24 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
                        .set_capture_done(set_capture_done), .decimator(decimator), .dump(dump),
                        .dump_fin(dumpDone), .trig_cfg(trig_cfg), .we(cap_we), .en(cap_en));
 
-  RAMInterface iRAM_Int(.clk(clk), .rst_n(rst_n), .rclk(rclk), .ch1_rdata(ch1_rdata),
+  RAM_Interface iRAM_Int(.clk(clk), .rst_n(rst_n), .rclk(rclk), .ch1_rdata(ch1_rdata),
                          .ch2_rdata(ch2_rdata), .ch3_rdata(ch3_rdata),
                          .ch_sel(ch_sel), .cap_en(cap_en), .cap_we(cap_we),
                          .en(en), .we(we), .read_data(RAM_rdata), .dump_en(dump_en));
 
   Command_Config iCNC(.clk(clk), .rst_n(rst_n), .SPI_done(SPI_done), .EEP_data(EEP_data),
                       .cmd(cmd), .cmd_rdy(cmd_rdy), .resp_sent(resp_sent),
-                      .capture_done(capture_done), .RAM_rdata(RAM_rdata), .SPI_data(SPI_data),
-                      .wrt_SPI(wrt_SPI), .ss(ss), .clr_cmd_rdy(clr_cmd_rdy), 
+                      .capture_done(capture_done), .RAM_rdata(RAM_rdata), .SPI_data(SPI_dataCNC),
+                      .wrt_SPI(wrt_SPICNC), .ss(ss), .clr_cmd_rdy(clr_cmd_rdy), 
                       .resp_data(resp_data), .send_resp(send_resp),
                       .trig_pos(trig_pos), .trig_cfg(trig_cfg),
-                      .decimator(decimator), .dump(dump), .dump_ch(dump_ch), .ch1_AFEGain(ch1_AFEGain),
-                      .ch2_AFEGain(ch2_AFEGain), .ch3_AFEGain(ch3_AFEGain));
+                      .decimator(decimator), .dump(dump), .dump_ch(dump_ch), .ch1_AFEgain(ch1_AFEGain),
+                      .ch2_AFEgain(ch2_AFEGain), .ch3_AFEgain(ch3_AFEGain));
 
-  DSM dsm(.clk(clk), .rst_n(rst_n), .rclk(rclk), .addr(addr_ptr), .incAddr(incAddr),
+  DSM dsm(.clk(clk), .rst_n(rst_n), .addr(addr_ptr), .incAddr(incAddr),
           .channel(dump_ch), .ch_sel(ch_sel), .ch1_AFEGain(ch1_AFEGain), .ch2_AFEGain(ch2_AFEGain),
-          .ch3_AFEGain(ch3_AFEGain), .startDump(dump), .startUARTresp(send_resp), .startSPI(wrt_SPI),
+          .ch3_AFEGain(ch3_AFEGain), .startDump(dump), .startUARTresp(send_resp), .startSPI(wrt_SPIDSM),
           .SPIrdy(SPI_done), .UARTrdy(resp_sent), .dumpDone(dump_fin),
-          .flopGain(flopGain), .flopOffset(flopOffset), .spiTXdata(SPI_data));
+          .flopGain(flopGain), .flopOffset(flopOffset), .spiTXdata(SPI_dataDSM));
   
 endmodule

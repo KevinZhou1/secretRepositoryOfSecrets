@@ -31,7 +31,7 @@
 //  I do not know if there would be any problems, but I do not think settings should       //
 //  be changed once the trigger function is enabled.                                      //
 ///////////////////////////////////////////////////////////////////////////////////////////
-module triggerModule(clk, rst_n, trig1, trig2, trig_cfg, armed, trig_en, set_capture_done, triggered);
+module TriggerLogic(clk, rst_n, trig1, trig2, trig_cfg, armed, trig_en, set_capture_done, triggered);
 
   input clk, rst_n;
   input trig1, trig2;
@@ -42,6 +42,7 @@ module triggerModule(clk, rst_n, trig1, trig2, trig_cfg, armed, trig_en, set_cap
   logic triggerPreFF, trigger_FF1, trigger_FF2, trigger_FF3; 
   logic trigPos, trigNeg;
   logic trigLogic, trig_set;
+  logic trigSrc, trigEdge, capture_done;
 
   assign trigSrc = trig_cfg[0];
   assign trigEdge = trig_cfg[4];

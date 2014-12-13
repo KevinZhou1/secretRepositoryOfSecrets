@@ -1,4 +1,4 @@
-module dumpSM(clk, rst_n, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2_AFEGain, ch3_AFEGain, startDump, startUARTresp, startSPI, SPIrdy, UARTrdy, dumpDone, flopGain, flopOffset, spiTXdata);
+module DSM(clk, rst_n, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2_AFEGain, ch3_AFEGain, startDump, startUARTresp, startSPI, SPIrdy, UARTrdy, dumpDone, flopGain, flopOffset, spiTXdata);
 
   input clk, rst_n, startDump, SPIrdy, UARTrdy;
   //startDump, input to kick off dump SM
