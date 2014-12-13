@@ -67,7 +67,7 @@ initial begin
     ggg = 3'b000; // analog gain value
     cc = 2'b00; // channel select
     send_cfg_gain_cmd(ggg, cc, 1'b1);
-    // Check set trigger level     (cmd 03)
+    /*// Check set trigger level     (cmd 03)
     LL = 8'h00; // trigger level
     send_trig_lvl_cmd(LL, 1'b1);
     // Check write trigger position register (cmd 04)
@@ -92,8 +92,8 @@ initial begin
     aaaaaa = 6'h00; // calibration address
     send_eep_rd_cmd(aaaaaa, VV);
     // Check dump channel
-    send_UART_mstr_cmd({DUMP_CH, 16'h0000});
-
+    send_UART_mstr_cmd({DUMP_CH, 16'h0000});*/
+    $stop;
 end
 
 always

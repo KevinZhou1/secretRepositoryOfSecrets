@@ -10,6 +10,7 @@ localparam TRIG_CFG = 8'h06;		// Write trig config.  2nd byte 00dettcc.  d=done,
 localparam TRIG_RD  = 8'h07;		// Read trig config register
 localparam EEP_WRT  = 8'h08;		// Write calibration EEP, 2nd byte is address, 3rd byte is data
 localparam EEP_RD   = 8'h09;		// Read calibration EEP, 2nd byte specifies address
+assign resp = resp_rcv;
 
 task gen_init;
     begin
