@@ -93,7 +93,8 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
                       .resp_data(resp_data), .send_resp(send_resp),
                       .trig_pos(trig_pos), .trig_cfg(trig_cfg),
                       .decimator(decimator), .dump(dump), .dump_ch(dump_ch), .ch1_AFEgain(ch1_AFEGain),
-                      .ch2_AFEgain(ch2_AFEGain), .ch3_AFEgain(ch3_AFEGain));
+                      .ch2_AFEgain(ch2_AFEGain), .ch3_AFEgain(ch3_AFEGain),
+                      .flopGain(flopGain), .flopOffset(flopOffset);
 
   DSM dsm(.clk(clk), .rst_n(rst_n), .addr(addr_ptr), .incAddr(incAddr),
           .channel(dump_ch), .ch_sel(ch_sel), .ch1_AFEGain(ch1_AFEGain), .ch2_AFEGain(ch2_AFEGain),
