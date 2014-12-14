@@ -1,14 +1,15 @@
 module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, RAM_rdata,
                       SPI_data, wrt_SPI, ss, clr_cmd_rdy, resp_data, send_resp, trig_pos,
 					  trig_cfg, decimator, dump, dump_ch, set_capture_done, ch1_AFEgain,
-                      ch2_AFEgain, ch3_AFEgain);
-  //////////////////////////////////
-  //This module reads in commands//
-  ////////////////////////////////
+                      ch2_AFEgain, ch3_AFEgain, flopGain, flopOffset);
+  ////////////////////////////////////////////////////////////////
+  //This module reads in commands and controls rclk and adc_clk//
+  //////////////////////////////////////////////////////////////
   input clk, rst_n, SPI_done, cmd_rdy, resp_sent;
   input [7:0] EEP_data, RAM_rdata;
   input [23:0] cmd;
   input set_capture_done;
+  input flopGain, flopOffset; //Signals to flop the offset or gain from the EEPROM during Dump
 
   output logic wrt_SPI, clr_cmd_rdy, send_resp;
   output logic [2:0] ss;
@@ -20,6 +21,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
   output logic [1:0] dump_ch;
   output logic dump;
   output logic [2:0] ch1_AFEgain, ch2_AFEgain, ch3_AFEgain;
+  logic [7:0] offset, gain;
 
   logic set_command;
   logic [23:0] command;
@@ -92,6 +94,30 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
 	end
   end
   
+   /////////////////////////////////////////
+  // 8-bit gain register for use in dump //
+  ////////////////////////////////////////
+  always @(posedge clk, negedge rst_n) begin
+    if(!rst_n)
+      gain <= 8'h00;
+    else if(flopGain)
+      gain <= EEP_data;
+    else
+      gain <= gain;
+  end
+
+   ///////////////////////////////////////////
+  // 8-bit offset register for use in dump //
+  //////////////////////////////////////////
+  always @(posedge clk, negedge rst_n) begin
+    if(!rst_n)
+      offset <= 8'h00;
+    else if(flopGain)
+      offset <= EEP_data;
+    else
+      offset <= offset;
+  end
+
   ///////////////////////////////////////////////////////
   //Flop the relevant bits of the command when moving //
   //into command mode from IDLE.                     //
