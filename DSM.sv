@@ -1,4 +1,6 @@
-module DSM(clk, rst_n, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2_AFEGain, ch3_AFEGain, startDump, startUARTresp, startSPI, SPIrdy, UARTrdy, dumpDone, flopGain, flopOffset, spiTXdata);
+module DSM(clk, rst_n, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2_AFEGain,
+           ch3_AFEGain, startDump, startUARTresp, startSPI, SPIrdy, UARTrdy,
+           dumpDone, flopGain, flopOffset, spiTXdata, dump_en);
 
   input clk, rst_n, startDump, SPIrdy, UARTrdy;
   //startDump, input to kick off dump SM
@@ -25,6 +27,7 @@ module DSM(clk, rst_n, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2_AFEGain,
   //ch_sel, flopped copy of which channel is being dumped, routed to the RAMInterface to select which RAM output we want.
   output logic [15:0] spiTXdata;
   //spiTXdata, the SPI command for the EEPROM
+  output logic dump_en;
 
   logic [2:0] ggg;        //The gain code of the channel selected for dumping.  Used to construct spiTXdata.
   logic [8:0] startAddr;  //Captures the starting addr at begining for comparison.
@@ -38,7 +41,16 @@ module DSM(clk, rst_n, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2_AFEGain,
 		(ch_sel == 2'b01)	?	ch2_AFEGain	:
 		(ch_sel == 2'b10)	?	ch3_AFEGain	:
                	3'b000;
-		
+  
+  // Indicates whether dump is in progress
+  always_comb begin
+    if(!rst_n)
+      dump_en = 1'b0;
+    else if(startDump)
+      dump_en = 1'b1;
+    else if(dumpDone)
+      dump_en = 1'b0;
+  end
 
   ////////////////////////////////////////
   // Following code is the state flops //

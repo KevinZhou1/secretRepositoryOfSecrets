@@ -23,7 +23,7 @@ wire trig1,trig2;
 DSO_dig iDUT(.clk(clk),.rst_n(rst_n),.adc_clk(adc_clk),.ch1_data(ch1_data),.ch2_data(ch2_data),
              .ch3_data(ch3_data),.trig1(trig1),.trig2(trig2),.MOSI(MOSI),.MISO(MISO),.SCLK(SCLK),
              .trig_ss_n(trig_ss_n),.ch1_ss_n(ch1_ss_n),.ch2_ss_n(ch2_ss_n),.ch3_ss_n(ch3_ss_n),
-			 .EEP_ss_n(EEP_ss_n),.TX(RX),.RX(TX));
+			 .EEP_ss_n(EEP_ss_n),.TX(TX),.RX(RX));
 
 ///////////////////////////////////////////////
 // Instantiate Analog Front End & A2D Model //
@@ -35,7 +35,7 @@ AFE_A2D iAFE(.clk(clk),.rst_n(rst_n),.adc_clk(adc_clk),.ch1_ss_n(ch1_ss_n),.ch2_
 /////////////////////////////////////////////
 // Instantiate UART Master (acts as host) //
 ///////////////////////////////////////////
-UART_comm_mstr iMSTR(.clk(clk), .rst_n(rst_n), .RX(RX), .TX(TX), .cmd(cmd_snd), .send_cmd(send_cmd),
+UART_comm_mstr iMSTR(.clk(clk), .rst_n(rst_n), .RX(TX), .TX(RX), .cmd(cmd_snd), .send_cmd(send_cmd),
                      .cmd_sent(cmd_sent), .resp_rdy(resp_rdy), .resp(resp_rcv), .clr_resp_rdy(clr_resp_rdy));
 
 /////////////////////////////////////
