@@ -232,7 +232,7 @@ task check_UART_resp;
     if(resp_rcv === 8'hEE)
         $display("DIG UART sent a neg ack :(\n");
     else if(resp_rcv !== expected)
-        $display("DIG UART gave you output 0x%h. You want output 0x%h\n", resp, expected);
+        $display("DIG UART gave you output 0x%h. You want output 0x%h\n", resp_rcv, expected);
     clr_resp_rdy = 1'b1;
     @(posedge clk);
     clr_resp_rdy = 1'b0;
