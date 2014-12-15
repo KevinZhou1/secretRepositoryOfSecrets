@@ -27,7 +27,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
   logic [23:0] command;
   logic [15:0] AFEgainSPI; //Serves as the output of a LUT for the possible gain settings
   logic wrt_trig_cfg;
-  logic flopAFEgain;
+  logic flopAFEgain, flopDec;
   logic [7:0] correctedRAM;
 
   Gain_Corrector iCorrector(.raw(RAM_rdata), .offset(offset), .gain(gain), .corrected(correctedRAM));
@@ -58,6 +58,18 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
       currentState <= IDLE;
     else
       currentState <= nextState;
+  end
+
+  ////////////////////////////////////////
+  // 4-bit Decimator Flop.             //
+  //////////////////////////////////////
+  always @(posedge clk, negedge rst_n) begin
+    if(!rst_n)
+      decimator <= 4'b0000;
+    else if(flopDec)
+      decimator <= command[3:0];
+    else
+      decimator <= decimator;
   end
   
    ///////////////////////////////////////
@@ -160,6 +172,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
     send_resp = 0;
     wrt_trig_cfg = 0;
     flopAFEgain = 0;
+    flopDec = 0;
     case(currentState)
       IDLE: if(cmd_rdy) begin
           nextState = CMD;
@@ -212,7 +225,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           // Set decimator (essentially the sample rate).
           // A 4-bit value is specified in bits[3:0] of the 3rd byte.
           // <DONE>
-          decimator = command[3:0];
+          flopDec = 1;
           resp_data = 8'hA5;
           send_resp = 1;
           nextState = UART;
