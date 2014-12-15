@@ -91,6 +91,7 @@ initial begin
     send_eep_rd_cmd(aaaaaa, VV);
     // Read TRIG_CFG
     send_rd_trig_cfg_cmd(d, e, tt, cc);
+    $stop;
     $readmemh("RAM.hex",iDUT.iRAM1.mem);
     $readmemh("RAM2.hex",iDUT.iRAM2.mem);
     $readmemh("RAM3.hex",iDUT.iRAM3.mem);
