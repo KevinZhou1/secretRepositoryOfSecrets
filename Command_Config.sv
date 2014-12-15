@@ -201,6 +201,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
     dump = 0;
     flopTrig_pos = 0;
     UART_resp = 2'b00;
+    nextState = IDLE;
     case(currentState)
       IDLE: if(cmd_rdy) begin
           nextState = CMD;
