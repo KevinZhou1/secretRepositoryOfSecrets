@@ -193,7 +193,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           nextState = CMD;
           resp_data = correctedRAM;
           SPI_data = 16'h0000;
-          ss = 3'b000;
+          ss = 3'b100;
           set_command = 1;
         end else begin
           nextState = IDLE;
