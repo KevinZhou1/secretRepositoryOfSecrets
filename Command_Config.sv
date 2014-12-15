@@ -279,7 +279,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
         end
       RD_EEP : if(SPI_done) begin
             wrt_SPI = 1;
-            SPI_data = {16'hbcbc};
+            SPI_data = 16'h0000;
             nextState = SPI;
         end else
             nextState = RD_EEP;
