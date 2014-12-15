@@ -63,6 +63,13 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
     else if(en_smpl_cnt)
       smpl_cnt <= smpl_cnt + 1;
   end
+  
+  always_ff @(posedge clk, negedge rst_n) begin
+    if(!rst_n)
+      keep_ff <= 1'b0;
+    else
+      keep_ff <= keep;
+  end
 
   ///////////////////////
   // Control trig_cnt //
