@@ -82,17 +82,20 @@ initial begin
     tt = 2'b01; // trigger type, 10 = auto roll, 01 = normal, 00 = off
     cc = 2'b00; // channel select, 00 = channel 1, 01 = channel
     send_trig_cfg_cmd(d, e, tt, cc, 1'b1);
-    // Read TRIG_CFG
-    send_rd_trig_cfg_cmd(d, e, tt, cc);
     // Write calibration EEP
     aaaaaa = 6'h12; // calibration address
     VV = 8'h34; // EEPROM calibration data
     send_eep_wrt_cmd(aaaaaa, VV, 1'b1);
     // Read calibration EEP
     aaaaaa = 6'h12; // calibration address
-    send_eep_rd_cmd(aaaaaa, VV);/*
+    send_eep_rd_cmd(aaaaaa, VV);
+    // Read TRIG_CFG
+    send_rd_trig_cfg_cmd(d, e, tt, cc);
+    $readmemh("RAM.hex",iDUT.iRAM1.mem);
+    $readmemh("RAM.hex",iDUT.iRAM2.mem);
+    $readmemh("RAM.hex",iDUT.iRAM3.mem);
     // Check dump channel
-    send_UART_mstr_cmd({DUMP_CH, 16'h0000});*/
+    send_UART_mstr_cmd({DUMP_CH, 16'h0000});
     $stop;
 end
 
