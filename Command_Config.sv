@@ -27,7 +27,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
   logic [23:0] command;
   logic [15:0] AFEgainSPI; //Serves as the output of a LUT for the possible gain settings
   logic wrt_trig_cfg;
-  logic flopAFEgain, flopDec;
+  logic flopAFEgain, flopDec, flopTrig_pos;
   logic [7:0] correctedRAM;
 
   Gain_Corrector iCorrector(.raw(RAM_rdata), .offset(offset), .gain(gain), .corrected(correctedRAM));
@@ -70,6 +70,18 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
       decimator <= command[3:0];
     else
       decimator <= decimator;
+  end
+
+  ////////////////////////////////////////
+  // 9-bit Trig_pos Flop.              //
+  //////////////////////////////////////
+  always @(posedge clk, negedge rst_n) begin
+    if(!rst_n)
+      trig_pos <= 9'b000000000;
+    else if(flopTrig_pos)
+      trig_pos <= command[8:0];
+    else
+      trig_pos <= trig_pos;
   end
   
    ///////////////////////////////////////
@@ -175,6 +187,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
     flopDec = 0;
     dump_ch = command[9:8];
     dump = 0;
+    flopTrig_pos = 0;
     case(currentState)
       IDLE: if(cmd_rdy) begin
           nextState = CMD;
@@ -216,7 +229,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           // Write the trigger position register.
           // Determines how many samples to capture after the trigger occurs.
           // This is a 9-bit value <DONE>
-          trig_pos = command[8:0];
+          flopTrig_pos = 1;
           resp_data = 8'hA5;
           send_resp = 1;
           nextState = UART;
