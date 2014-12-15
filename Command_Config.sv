@@ -197,6 +197,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           set_command = 1;
         end else begin
           nextState = IDLE;
+          resp_data = correctedRAM;
         end
       CMD: if(command[23:16] == DUMP_CH) begin
           // Dump channel command. Channel to dump to UART is specified in the lower 2-bits
@@ -279,7 +280,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
         end
       RD_EEP : if(SPI_done) begin
             wrt_SPI = 1;
-            SPI_data = 16'h0000;
+            SPI_data = {16'hbcbc};
             nextState = SPI;
         end else
             nextState = RD_EEP;
