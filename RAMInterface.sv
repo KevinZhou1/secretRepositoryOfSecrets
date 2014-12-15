@@ -1,7 +1,5 @@
-module RAM_Interface(clk, rst_n, rclk, ch1_rdata, ch2_rdata, ch3_rdata, we, en, ch_sel, read_data, cap_en, cap_we, dump_en);
+module RAM_Interface(ch1_rdata, ch2_rdata, ch3_rdata, we, en, ch_sel, read_data, cap_en, cap_we, dump_en);
 
-  input clk, rst_n;
-  input rclk;				   // clock (1/2 of system clock, 200MHz)
   input cap_en, cap_we, dump_en;          // Enable/Write signals from capture and dump SMs
   output en;			 	 // Active high for reads or writes to occur
   output we;			 	// Has to be high in addition to en for writes

@@ -140,7 +140,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
   always @(posedge clk, negedge rst_n) begin
     if(!rst_n)
       offset <= 8'h00;
-    else if(flopGain)
+    else if(flopOffset)
       offset <= EEP_data;
     else
       offset <= offset;
