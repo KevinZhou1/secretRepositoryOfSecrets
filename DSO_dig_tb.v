@@ -68,7 +68,7 @@ initial begin
     cc = 2'b00; // channel select
     send_cfg_gain_cmd(ggg, cc, 1'b1);
     // Check set trigger level     (cmd 03)
-    LL = 8'h00; // trigger level
+    LL = 8'h2E; // trigger level
     send_trig_lvl_cmd(LL, 1'b1);
     /*// Check write trigger position register (cmd 04)
     ULL = 9'h100; // trigger position
