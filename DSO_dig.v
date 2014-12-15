@@ -60,7 +60,8 @@ module DSO_dig(clk,rst_n,adc_clk,ch1_data,ch2_data,ch3_data,trig1,trig2,MOSI,MIS
           3'b010: ch2_ss_n = 0;
           3'b011: ch3_ss_n = 0;
           3'b100: EEP_ss_n = 0;
-          default: ;
+          default: 
+          EEP_ss_n = 0;
     endcase end
   end
   ///////////////////////////////////

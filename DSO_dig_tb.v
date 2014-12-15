@@ -94,9 +94,10 @@ initial begin
     $readmemh("RAM.hex",iDUT.iRAM1.mem);
     $readmemh("RAM2.hex",iDUT.iRAM2.mem);
     $readmemh("RAM3.hex",iDUT.iRAM3.mem);
+    $stop();
     // Check dump channel
     send_UART_mstr_cmd({DUMP_CH, 16'h0000});
-    $stop;
+    //$stop;
 end
 
 endmodule
