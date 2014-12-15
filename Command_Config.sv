@@ -1,11 +1,11 @@
-module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, capture_done, RAM_rdata,
+module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, RAM_rdata,
                       SPI_data, wrt_SPI, ss, clr_cmd_rdy, resp_data, send_resp, trig_pos,
 					  trig_cfg, decimator, dump, dump_ch, set_capture_done, ch1_AFEgain,
                       ch2_AFEgain, ch3_AFEgain, flopGain, flopOffset);
   ////////////////////////////////////////////////////////////////
   //This module reads in commands and controls rclk and adc_clk//
   //////////////////////////////////////////////////////////////
-  input clk, rst_n, SPI_done, cmd_rdy, capture_done, resp_sent;
+  input clk, rst_n, SPI_done, cmd_rdy, resp_sent;
   input [7:0] EEP_data, RAM_rdata;
   input [23:0] cmd;
   input set_capture_done;
@@ -31,6 +31,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
   logic [7:0] correctedRAM;
 
   Gain_Corrector iCorrector(.raw(RAM_rdata), .offset(offset), .gain(gain), .corrected(correctedRAM));
+  assign capture_done = trig_cfg[5];
 
   typedef enum logic [1:0] { IDLE, CMD, SPI, UART } state_t;
   state_t currentState, nextState;
@@ -241,7 +242,6 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
           nextState = UART;
         end
       SPI: if(SPI_done) begin
-          clr_cmd_rdy = 1;
           nextState = UART;
           send_resp = 1;
           if(!SPI_data[14] && ss[2]) // Send calibration EEPROM data
@@ -254,7 +254,8 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
            nextState = IDLE;
            clr_cmd_rdy = 1;
         end else
-           nextState = IDLE;
+           nextState = UART;
+      default: ;
     endcase
     
   end

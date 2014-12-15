@@ -34,12 +34,14 @@ module DSO_dig(clk,rst_n,adc_clk,ch1_data,ch2_data,ch3_data,trig1,trig2,MOSI,MIS
   wire [7:0]ch1_rdata, ch2_rdata, ch3_rdata;
 
   wire [23:0]cmd;
-  wire cmd_rdy,resp_sent, trmt, clr_cmd_rdy, rdy, clr_rdy;
+  wire cmd_rdy,resp_sent, clr_cmd_rdy, rdy, clr_rdy;
   wire [7:0] resp_data, rx_data;
   /////////////////////////////
   // Instantiate SPI master //
   ///////////////////////////
-  SPI_Master iSPI(.clk(clk), .rst_n(rst_n), .wrt(wrt_SPI), .MISO(MISO), .cmd(SPI_cmd), .SCLK(SCLK), .SS_n(SS_n), .done(SPI_done), .MOSI(MOSI), .SPI_data_out(SPI_data_out));
+  SPI_Master iSPI(.clk(clk), .rst_n(rst_n), .wrt(wrt_SPI), .MISO(MISO),
+                  .cmd(SPI_cmd), .SCLK(SCLK), .SS_n(SS_n), .done(SPI_done),
+                  .MOSI(MOSI), .SPI_data_out(SPI_data_out));
   ///////////////////////////////////////////////////////////////
   // You have a SPI master peripheral with a single SS output //
   // you might have to do something creative to generate the //
@@ -51,28 +53,33 @@ module DSO_dig(clk,rst_n,adc_clk,ch1_data,ch2_data,ch3_data,trig1,trig2,MOSI,MIS
     ch3_ss_n = 1;
     trig_ss_n = 1;
     EEP_ss_n = 1;
-    case (ss)
-      3'b000: trig_ss_n = 0;
-      3'b001: ch1_ss_n = 0;
-      3'b010: ch2_ss_n = 0;
-      3'b011: ch3_ss_n = 0;
-      3'b100: EEP_ss_n = 0;
-      default: ;
-    endcase
+    if(!SS_n) begin
+        case (ss)
+          3'b000: trig_ss_n = 0;
+          3'b001: ch1_ss_n = 0;
+          3'b010: ch2_ss_n = 0;
+          3'b011: ch3_ss_n = 0;
+          3'b100: EEP_ss_n = 0;
+          default: ;
+    endcase end
   end
   ///////////////////////////////////
   // Instantiate UART_comm module //
   /////////////////////////////////
-  UART_comm iUART(.cmd_rdy(cmd_rdy), .cmd(cmd), .TX(TX), .tx_done(tx_done),
+  UART_comm iUART(.cmd_rdy(cmd_rdy), .cmd(cmd), .TX(TX), .tx_done(resp_sent),
                 .clk(clk), .rst_n(rst_n), .clr_cmd_rdy(clr_cmd_rdy),
-                .trmt(trmt), .RX(RX), .tx_data(resp_data));
+                .trmt(send_resp), .RX(RX), .tx_data(resp_data));
   
   ///////////////////////////
   // Instantiate dig_core //
   /////////////////////////
-  dig_core idig_core(.clk(clk),.rst_n(rst_n),.adc_clk(adc_clk),.trig1(trig1),.trig2(trig2),.SPI_data(SPI_cmd),.wrt_SPI(wrt_SPI),.SPI_done(SPI_done),.ss(ss),.EEP_data(EEP_data),
-                     .rclk(rclk),.en(en),.we(we),.addr(addr),.ch1_rdata(ch1_rdata),.ch2_rdata(ch2_rdata),.ch3_rdata(ch3_rdata),.cmd(cmd),.cmd_rdy(cmd_rdy),.clr_cmd_rdy(clr_cmd_rdy),
-				     .resp_data(resp_data),.send_resp(trmt),.resp_sent(resp_sent));
+  dig_core idig_core(.clk(clk),.rst_n(rst_n),.adc_clk(adc_clk),.trig1(trig1),
+                     .trig2(trig2),.SPI_data(SPI_cmd),.wrt_SPI(wrt_SPI),
+                     .SPI_done(SPI_done),.ss(ss),.EEP_data(EEP_data),
+                     .rclk(rclk),.en(en),.we(we),.addr(addr),.ch1_rdata(ch1_rdata),
+                     .ch2_rdata(ch2_rdata),.ch3_rdata(ch3_rdata),.cmd(cmd),.cmd_rdy(cmd_rdy),
+                     .clr_cmd_rdy(clr_cmd_rdy), .resp_data(resp_data),.send_resp(send_resp),
+                     .resp_sent(resp_sent));
   //////////////////////////////////////////////////////////////
   // Instantiate the 3 512 RAM blocks that store A2D samples //
   ////////////////////////////////////////////////////////////

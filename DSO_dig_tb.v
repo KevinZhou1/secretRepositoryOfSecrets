@@ -23,7 +23,7 @@ wire trig1,trig2;
 DSO_dig iDUT(.clk(clk),.rst_n(rst_n),.adc_clk(adc_clk),.ch1_data(ch1_data),.ch2_data(ch2_data),
              .ch3_data(ch3_data),.trig1(trig1),.trig2(trig2),.MOSI(MOSI),.MISO(MISO),.SCLK(SCLK),
              .trig_ss_n(trig_ss_n),.ch1_ss_n(ch1_ss_n),.ch2_ss_n(ch2_ss_n),.ch3_ss_n(ch3_ss_n),
-			 .EEP_ss_n(EEP_ss_n),.TX(RX),.RX(TX));
+			 .EEP_ss_n(EEP_ss_n),.TX(TX),.RX(RX));
 
 ///////////////////////////////////////////////
 // Instantiate Analog Front End & A2D Model //
@@ -35,7 +35,7 @@ AFE_A2D iAFE(.clk(clk),.rst_n(rst_n),.adc_clk(adc_clk),.ch1_ss_n(ch1_ss_n),.ch2_
 /////////////////////////////////////////////
 // Instantiate UART Master (acts as host) //
 ///////////////////////////////////////////
-UART_comm_mstr iMSTR(.clk(clk), .rst_n(rst_n), .RX(RX), .TX(TX), .cmd(cmd_snd), .send_cmd(send_cmd),
+UART_comm_mstr iMSTR(.clk(clk), .rst_n(rst_n), .RX(TX), .TX(RX), .cmd(cmd_snd), .send_cmd(send_cmd),
                      .cmd_sent(cmd_sent), .resp_rdy(resp_rdy), .resp(resp_rcv), .clr_resp_rdy(clr_resp_rdy));
 
 /////////////////////////////////////
@@ -67,10 +67,10 @@ initial begin
     ggg = 3'b000; // analog gain value
     cc = 2'b00; // channel select
     send_cfg_gain_cmd(ggg, cc, 1'b1);
-    /*// Check set trigger level     (cmd 03)
+    // Check set trigger level     (cmd 03)
     LL = 8'h00; // trigger level
     send_trig_lvl_cmd(LL, 1'b1);
-    // Check write trigger position register (cmd 04)
+    /*// Check write trigger position register (cmd 04)
     ULL = 9'h100; // trigger position
     send_trig_pos_cmd(ULL, 1'b1);
     // Check set decimator (cmd 05)

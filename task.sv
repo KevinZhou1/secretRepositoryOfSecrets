@@ -26,6 +26,7 @@ task init_UART_comm_mstr;
     send_cmd = 1'b0;
     clr_resp_rdy = 1'b1;
     repeat(2) @(posedge clk);
+    clr_resp_rdy = 1'b0;
     end
 endtask
 
@@ -148,6 +149,7 @@ task check_UART_pos_ack;
     clr_resp_rdy = 1'b1;
     @(posedge clk);
     clr_resp_rdy = 1'b0;
+    @(posedge clk);
     if(resp_rdy !== 1'b0)
         $display("DIG UART resp_rdy didn't clear");
     end
