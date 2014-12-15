@@ -28,6 +28,9 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
   logic [15:0] AFEgainSPI; //Serves as the output of a LUT for the possible gain settings
   logic wrt_trig_cfg;
   logic flopAFEgain;
+  logic [7:0] correctedRAM;
+
+  Gain_Corrector iCorrector(.raw(RAM_rdata), .offset(offset), .gain(gain), .corrected(correctedRAM));
 
   typedef enum logic [1:0] { IDLE, CMD, SPI, UART } state_t;
   state_t currentState, nextState;
@@ -150,11 +153,11 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, c
     wrt_SPI = 0;
     send_resp = 0;
     wrt_trig_cfg = 0;
-	flopAFEgain = 0;
+    flopAFEgain = 0;
     case(currentState)
       IDLE: if(cmd_rdy) begin
           nextState = CMD;
-          resp_data = 8'h00;
+          resp_data = correctedRAM;
           SPI_data = 16'h0000;
           ss = 3'b000;
           set_command = 1;
