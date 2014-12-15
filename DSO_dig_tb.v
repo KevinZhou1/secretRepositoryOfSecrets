@@ -71,11 +71,11 @@ initial begin
     LL = 8'h2E; // trigger level
     send_trig_lvl_cmd(LL, 1'b1);
     // Check write trigger position register (cmd 04)
-    ULL = 9'h100; // trigger position
+    ULL = 9'h134; // trigger position
     send_trig_pos_cmd(ULL, 1'b1);
     // Check set decimator (cmd 05)
-    L = 4'h0; // decimator
-    send_set_dec_cmd(LL, 1'b1);/*
+    L = 4'h2; // decimator
+    send_set_dec_cmd(LL, 1'b1);
     // Check TRIG_CFG
     d = 1'b0; // capture_done
     e = 1'b1; // edge type, 1 == positive edge, 0 == negative edge
@@ -85,12 +85,12 @@ initial begin
     // Read TRIG_CFG
     send_rd_trig_cfg_cmd(d, e, tt, cc);
     // Write calibration EEP
-    aaaaaa = 6'h00; // calibration address
-    VV = 8'h00; // EEPROM calibration data
+    aaaaaa = 6'h12; // calibration address
+    VV = 8'h34; // EEPROM calibration data
     send_eep_wrt_cmd(aaaaaa, VV, 1'b1);
     // Read calibration EEP
-    aaaaaa = 6'h00; // calibration address
-    send_eep_rd_cmd(aaaaaa, VV);
+    aaaaaa = 6'h12; // calibration address
+    send_eep_rd_cmd(aaaaaa, VV);/*
     // Check dump channel
     send_UART_mstr_cmd({DUMP_CH, 16'h0000});*/
     $stop;

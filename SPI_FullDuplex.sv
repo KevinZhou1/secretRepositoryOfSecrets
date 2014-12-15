@@ -30,6 +30,7 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
   logic [15:0] TX_REG;//, RX_REG;
 
 
+  reg done_pff; // done before flip flop
   state_t currentState, nextState;
 
   ////////////////////////////////////////
@@ -116,6 +117,12 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
       pulse_cnt <= pulse_cnt;
   end
 
+  always_ff @(posedge clk, negedge rst_n) begin
+    if(!rst_n)
+        done <= 1'b0;
+    else
+        done <= done_pff;
+  end
   /////////////////////////////////////////////////////////////////
   //Our wonderful state machine.  BP1 and BP2 are 'back porch'  //
   //states that are there to assist in clean-up of SCLK pulses //
@@ -125,7 +132,7 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
     //Default output values
     SS_n = 1;
     SCLK = SCLK_cnt[4];
-    done = 0;
+    done_pff = 0;
     nextState = IDLE;
     MOSI = TX_REG[15];
     SPI_data_out = TX_REG;
@@ -150,7 +157,7 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
           nextState = BP1;
         end
       BP2: begin
-        done = 1;
+        done_pff = 1;
         nextState = IDLE;
         end
     endcase

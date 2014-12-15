@@ -22,6 +22,7 @@ endtask
 
 task init_UART_comm_mstr;
     begin
+    $display("begin UART init...");
     cmd_snd = 24'h000000;
     send_cmd = 1'b0;
     clr_resp_rdy = 1'b1;
@@ -47,6 +48,7 @@ task send_cfg_gain_cmd;
     input [1:0] cc;  // channel select
     input valid;     //check for positive or negative ack?
     begin
+    $display("begin send cfg_gain_cmd...");
     send_UART_mstr_cmd({CFG_GAIN, 3'h0, ggg, cc, 8'hxx});
     if(valid)
         check_UART_pos_ack();
@@ -59,6 +61,7 @@ task send_trig_lvl_cmd;
     input [7:0] LL; // trigger level value
     input valid;
     begin
+    $display("begin send_trig_lvl_cmd...");
     send_UART_mstr_cmd({TRIG_LVL, 8'hxx, LL});
     if(valid)
         check_UART_pos_ack();
@@ -71,6 +74,7 @@ task send_trig_pos_cmd;
     input [8:0] ULL; // trigger position value
     input valid;
     begin
+    $display("begin send_trig_pos_cmd...");
     send_UART_mstr_cmd({TRIG_POS, 7'h00, ULL});
     if(valid)
         check_UART_pos_ack();
@@ -86,6 +90,7 @@ task send_set_dec_cmd;
     input [3:0] L; // decimator
     input valid;
     begin
+    $display("begin set_dec_cmd...");
     send_UART_mstr_cmd({SET_DEC, 8'hxx, 4'h0, L});
     if(valid)
         check_UART_pos_ack();
@@ -104,7 +109,8 @@ task send_trig_cfg_cmd;
     input [1:0] cc; // channel select, 00 = channel 1, 01 = channel
     input valid;
     begin
-    send_UART_mstr_cmd({TRIG_CFG, d, e, tt, cc, 8'hxx});
+    $display("begin send_trig_cfg_cmd...");
+    send_UART_mstr_cmd({TRIG_CFG, 2'b00, d, e, tt, cc, 8'hxx});
     if(valid)
         check_UART_pos_ack();
     else
@@ -121,6 +127,7 @@ task send_rd_trig_cfg_cmd;
     input [1:0] tt; // expected trigger type, 10 = auto roll, 01 = normal, 00 = off
     input [1:0] cc; // expected channel select, 00 = channel 1, 01 = channel
     begin
+    $display("begin send_rd_trig_cfg_cmd...");
     send_UART_mstr_cmd({TRIG_RD, 16'hxxxx});
     check_UART_resp({2'b00, d, e, tt, cc});
     end
@@ -131,6 +138,7 @@ task send_eep_wrt_cmd;
     input [7:0] VV; // EEPROM calibration data
     input valid;
     begin
+    $display("begin send_eep_wrt_cmd...");
     send_UART_mstr_cmd({EEP_WRT, 2'h0, aaaaaa, VV});
     if(valid)
         check_UART_pos_ack();
@@ -143,7 +151,8 @@ task send_eep_rd_cmd;
     input [5:0] aaaaaa;
     input [7:0] expected;
     begin
-    send_UART_mstr_cmd({EEP_RD, 2'h0, aaaaaa, 8'hxx});
+    $display("begin send_eep_rd_cmd...");
+    send_UART_mstr_cmd({EEP_RD, 2'h0, aaaaaa, 8'h00});
     check_UART_resp(expected);
     end
 endtask
@@ -154,7 +163,7 @@ task check_UART_pos_ack;
     if(resp_rcv === 8'hEE)
         $display("DIG UART sent a neg ack (you want a pos ack) :(\n");
     else if(resp_rcv !== 8'hA5)
-        $display("DIG UART sent '%h' instead of pos ack\n", resp);
+        $display("DIG UART sent 0x%h instead of pos ack\n", resp);
     clr_resp_rdy = 1'b1;
     @(posedge clk);
     clr_resp_rdy = 1'b0;
@@ -170,10 +179,11 @@ task check_UART_neg_ack;
     if(resp_rcv === 8'hA5)
         $display("DIG UART sent a pos ack (you want a neg ack) :(\n");
     else if(resp_rcv !== 8'hEE)
-        $display("DIG UART sent '%h' instead of neg ack\n", resp);
+        $display("DIG UART sent 0x%h instead of neg ack\n", resp);
     clr_resp_rdy = 1'b1;
     @(posedge clk);
     clr_resp_rdy = 1'b0;
+    @(posedge clk);
     if(resp_rdy !== 1'b0)
         $display("DIG UART resp_rdy didn't clear");
     end
@@ -182,13 +192,15 @@ endtask
 task check_UART_resp;
     input [7:0] expected;
     begin
+    @(posedge resp_rdy);
     if(resp_rcv === 8'hEE)
         $display("DIG UART sent a neg ack :(\n");
-    else if(resp_rcv !== 8'hA5)
-        $display("DIG UART gave you output '%h'. You want output '%h'\n", resp, expected);
+    else if(resp_rcv !== expected)
+        $display("DIG UART gave you output 0x%h. You want output 0x%h\n", resp, expected);
     clr_resp_rdy = 1'b1;
     @(posedge clk);
     clr_resp_rdy = 1'b0;
+    @(posedge clk);
     if(resp_rdy !== 1'b0)
         $display("DIG UART resp_rdy didn't clear");
     end
