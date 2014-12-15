@@ -31,6 +31,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
   logic [7:0] correctedRAM;
 
   Gain_Corrector iCorrector(.raw(RAM_rdata), .offset(offset), .gain(gain), .corrected(correctedRAM));
+
   assign capture_done = trig_cfg[5];
 
   typedef enum logic [1:0] { IDLE, CMD, SPI, UART } state_t;
