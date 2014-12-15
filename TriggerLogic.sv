@@ -42,11 +42,11 @@ module TriggerLogic(clk, rst_n, trig1, trig2, trig_cfg, armed, trig_en, set_capt
   logic triggerPreFF, trigger_FF1, trigger_FF2, trigger_FF3; 
   logic trigPos, trigNeg;
   logic trigLogic, trig_set;
-  logic trigSrc, trigEdge, capture_done;
+  logic trigSrc, trigEdge; //capture_done;
 
   assign trigSrc = trig_cfg[0];
   assign trigEdge = trig_cfg[4];
-  assign capture_done = trig_cfg[5];
+  //assign capture_done = trig_cfg[5];
   
   //The SR flop input mechanism and the trigger conditions AND gate.
   //Consider moving SR logic to the flop block.
