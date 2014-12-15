@@ -45,7 +45,7 @@ SPI_EEP iEEP(.clk(clk),.rst_n(rst_n),.SS_n(EEP_ss_n),.SCLK(SCLK),.MOSI(MOSI),.MI
 
 initial clk = 0;
 always
-    #2 clk = ~clk; // 500 MHz clock
+    #1.25 clk = ~clk; // 400 MHz clock
 
 reg [7:0] trig_cfg;
 reg [7:0] AFE_data;
