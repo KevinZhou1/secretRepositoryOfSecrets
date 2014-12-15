@@ -33,7 +33,6 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   //////////////////////////////////////////////////////////////////////////
   // Interconnects between modules...declare any wire types you need here//
   ////////////////////////////////////////////////////////////////////////
-  wire trig_en;                                 // Enable signal from Command to Capture
   wire incAddr;                                 // Signal to inc the addr_ptr from the DSM to the ADC_SM
   wire capture_done;                            // Signal from capture module that it has triggered and capture is complete
   wire clr_cap_done;                            // Signal to clear current capture status on the Capture module
@@ -80,7 +79,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   // Instantiate the blocks of your digital core next //
   /////////////////////////////////////////////////////
   
-  ADC_Capture iADC_Cap(.clk(clk), .rst_n(rst_n), .trig1(trig1), .trig2(trig2), .trig_en(trig_en),
+  ADC_Capture iADC_Cap(.clk(clk), .rst_n(rst_n), .trig1(trig1), .trig2(trig2),
                        .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .addr_ptr(addr_ptr),
                        .set_capture_done(set_capture_done), .decimator(decimator), .dump(dump),
                        .dump_fin(dumpDone), .trig_cfg(trig_cfg), .we(cap_we), .en(cap_en),

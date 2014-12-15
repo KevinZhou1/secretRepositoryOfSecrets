@@ -1,4 +1,4 @@
-module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap_done,
+module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_pos, clr_cap_done,
                    decimator, addr_ptr, set_capture_done, dump, dump_fin, trig_cfg, we,
                    en, incAddr);
   /////////////////////////////////////////////////////////////////
@@ -8,7 +8,6 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   /////////////////////////////////////////////////////////////
   input clk, rst_n;
   input trig1, trig2;
-  input trig_en;
   input adc_clk;
   input [8:0] trig_pos;
   input [7:0] trig_cfg;
@@ -30,7 +29,6 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   logic [7:0] trace_end;
   logic en_wait_cnt;
   logic keep_ff;
-  logic dumpDump; // indicates whether dump is complete
   logic armed, keep, en_trig_cnt, en_smpl_cnt;
   logic triggered;
   logic autoroll;
@@ -108,7 +106,7 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   end
 
   // Decide whether or not to keep/write sample based on decimator
-  assign keep = ((wait_cnt == (1 << decimator) - 1) && trig_en && !capture_done) ? 1'b1 : 1'b0;
+  assign keep = ((wait_cnt == ((1 << decimator) - 1)) && trig_en && !capture_done) ? 1'b1 : 1'b0;
   
   assign en_trig_cnt = (triggered | autoroll&armed)&keep;
   
@@ -155,7 +153,7 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
         else
           nextState = IDLE;
       end DUMP : begin // Wait for channel dump to finish
-        if(dumpDump)
+        if(dump_fin)
           nextState = IDLE;
         else
           nextState = DUMP;

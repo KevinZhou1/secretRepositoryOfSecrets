@@ -147,7 +147,7 @@ initial begin
     $stop();
     // Check dump channel
     send_UART_mstr_cmd({DUMP_CH, 16'h0000});
-    //$stop;
+    $stop;
 end
 
 endmodule
