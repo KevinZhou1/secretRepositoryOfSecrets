@@ -41,7 +41,7 @@ set_output_delay -clock clk .5 [all_outputs]
 ########################################################
 # Set drive strength and load models.                  #
 ########################################################
-set_driving_cell -lib_cell ND2D2BWP -pin Z -from_pin A1 -library tcbn40lpbwptc [copy_collection $prim_inputs]
+set_driving_cell -lib_cell ND2D2BWP -library tcbn40lpbwptc [copy_collection $prim_inputs]
 set_drive 0.1 rst_n
 set_load 0.1 [all_outputs]
 set_wire_load_model -name TSMC32K_Lowk_Conservative -library tcbn40lpbwptc
