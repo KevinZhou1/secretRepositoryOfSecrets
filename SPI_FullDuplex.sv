@@ -160,7 +160,7 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
 endmodule
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
+/*//////////////////////////////////////////////////////////////////////////////////////////////////
 //Full-Duplex SPI Slave for HW4 Problem 3                                                       //
 //                                                                                             //
 //Interface Inputs:                                                                           //
@@ -318,10 +318,10 @@ module SPI_Slave(clk, rst_n, cmd, cmd_rdy, MISO, SCLK, MOSI, SS_n, SPI_slave_out
   end
 
 endmodule
+*/
 
 
-
-////////////////////////////////////////////////////////////////////////////////////
+/*///////////////////////////////////////////////////////////////////////////////////
 //Simple test bench that initiates 2 wrt series with cmd values for comparison.  //
 //////////////////////////////////////////////////////////////////////////////////
 module SPI_Master_Slave_tb();
@@ -397,4 +397,4 @@ module SPI_Master_Slave_tb();
     $stop;
   end
 endmodule
-
+*/
