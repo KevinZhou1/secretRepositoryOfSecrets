@@ -28,6 +28,10 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
   logic [15:0] AFEgainSPI; //Serves as the output of a LUT for the possible gain settings
   logic wrt_trig_cfg;
   logic flopAFEgain;
+  logic [7:0] correctedRAM;
+
+  Gain_Corrector iCorrector(.raw(RAM_rdata), .offset(offset), .gain(gain), .corrected(correctedRAM));
+
   assign capture_done = trig_cfg[5];
 
   typedef enum logic [1:0] { IDLE, CMD, SPI, UART } state_t;
@@ -129,14 +133,18 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
       command <= cmd[23:0];
   end
 
-  // trig_cfg logic
-  always_comb begin
+  //////////////////////////////////////////////////////
+  //trig_cfg FlipFlop.                               //
+  ////////////////////////////////////////////////////
+  always @(posedge clk, negedge rst_n) begin
     if(!rst_n)
-      trig_cfg = 8'h00;
+      trig_cfg <= 8'h00;
     else if(set_capture_done)
-      trig_cfg[5] = 1;
+      trig_cfg <= {2'b00, 1'b1, trig_cfg[4:0]};
     else if(wrt_trig_cfg)
-      trig_cfg = {2'b00, command[13:8]};
+      trig_cfg <= {2'b00, command[13:8]};
+    else
+      trig_cfg <= trig_cfg;
   end
 
   //////////////////////////////////////////////////////////////////////
@@ -151,11 +159,11 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
     wrt_SPI = 0;
     send_resp = 0;
     wrt_trig_cfg = 0;
-	flopAFEgain = 0;
+    flopAFEgain = 0;
     case(currentState)
       IDLE: if(cmd_rdy) begin
           nextState = CMD;
-          resp_data = 8'h00;
+          resp_data = correctedRAM;
           SPI_data = 16'h0000;
           ss = 3'b000;
           set_command = 1;
