@@ -29,7 +29,6 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
   logic wrt_trig_cfg;
   logic flopAFEgain, flopDec, flopTrig_pos;
   logic [7:0] correctedRAM;
-  logic [1:0] UART_resp;
 
   Gain_Corrector iCorrector(.raw(RAM_rdata), .offset(offset), .gain(gain), .corrected(correctedRAM));
 
@@ -172,17 +171,6 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
       trig_cfg <= trig_cfg;
   end
 
-  always_ff @(posedge clk, negedge rst_n) begin
-    if(!rst_n)
-      resp_data <= 8'h00;
-    else
-      case(UART_resp)
-        2'b00 : resp_data <= 8'hee; // posack
-        2'b01 : resp_data <= 8'ha5; // negack
-        2'b10 : resp_data <= trig_cfg;
-        2'b11 : resp_data <= EEP_data;
-      endcase
-  end
   //////////////////////////////////////////////////////////////////////
   //Our wonderful state machine.  CMD is a one cycle command         //
   //decode state.  SPI waits for the spi transaction to complete    //
@@ -200,16 +188,18 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
     dump_ch = command[9:8];
     dump = 0;
     flopTrig_pos = 0;
-    UART_resp = 2'b00;
     nextState = IDLE;
+    //SPI_data = 16'h0000;
     case(currentState)
       IDLE: if(cmd_rdy) begin
           nextState = CMD;
+          resp_data = correctedRAM;
           SPI_data = 16'h0000;
           ss = 3'b100;
           set_command = 1;
         end else begin
           nextState = IDLE;
+          resp_data = correctedRAM;
         end
       CMD: if(command[23:16] == DUMP_CH && !(&command[9:8])) begin
           // Dump channel command. Channel to dump to UART is specified in the lower 2-bits
@@ -243,7 +233,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           // Determines how many samples to capture after the trigger occurs.
           // This is a 9-bit value <DONE>
           flopTrig_pos = 1;
-          UART_resp = 2'b01;
+          resp_data = 8'hA5;
           send_resp = 1;
           nextState = UART;
         end else if(command[23:16] == SET_DEC) begin
@@ -251,7 +241,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           // A 4-bit value is specified in bits[3:0] of the 3rd byte.
           // <DONE>
           flopDec = 1;
-          UART_resp = 2'b01;
+          resp_data = 8'hA5;
           send_resp = 1;
           nextState = UART;
         end else if(command[23:16] == TRIG_CFG && !cmd[9]) begin
@@ -259,7 +249,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           // This command is also used to configure the trigger parameters (edge, trigger type, channel)
           // <DONE>
           wrt_trig_cfg = 1;
-          UART_resp = 2'b01;
+          resp_data = 8'hA5;
           send_resp = 1;
           nextState = UART;
         end else if(command[23:16] == TRIG_RD) begin
@@ -267,7 +257,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           // <DONE>
           nextState = UART;
           send_resp = 1;
-          UART_resp = 2'b10;
+          resp_data = trig_cfg;
         end else if(command[23:16] == EEP_WRT) begin
           // Write location specified by 6-bit address of calibration EEPROM with data
           // specified in the 3rdbyte.
@@ -286,7 +276,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
         end else begin
           // Failed response
           // <DONE>
-          UART_resp = 2'b00;
+          resp_data = 8'hEE;
           send_resp = 1;
           nextState = UART;
         end
@@ -300,9 +290,9 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           nextState = UART;
           send_resp = 1;
           if(!SPI_data[14] && ss[2]) // Send calibration EEPROM data
-            UART_resp = 2'b11;
+            resp_data = EEP_data;
           else // Sent SPI, indicate positive response
-            UART_resp = 2'b01;
+            resp_data = 8'hA5;
         end else
           nextState = SPI;
 
