@@ -92,8 +92,8 @@ initial begin
     // Read TRIG_CFG
     send_rd_trig_cfg_cmd(d, e, tt, cc);
     $readmemh("RAM.hex",iDUT.iRAM1.mem);
-    $readmemh("RAM.hex",iDUT.iRAM2.mem);
-    $readmemh("RAM.hex",iDUT.iRAM3.mem);
+    $readmemh("RAM2.hex",iDUT.iRAM2.mem);
+    $readmemh("RAM3.hex",iDUT.iRAM3.mem);
     // Check dump channel
     send_UART_mstr_cmd({DUMP_CH, 16'h0000});
     $stop;
