@@ -80,34 +80,34 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
       ch1_AFEgain <= 3'b000;
       ch2_AFEgain <= 3'b000;
       ch3_AFEgain <= 3'b000;
-	end else if(flopAFEgain) begin
+    end else if(flopAFEgain) begin
       case(command[9:8])
-            2'b00: begin
-              ch1_AFEgain <= command[12:10];
-              ch2_AFEgain <= ch2_AFEgain;
-              ch3_AFEgain <= ch3_AFEgain;
-			  end
-            2'b01: begin
-              ch1_AFEgain <= command[12:10];
-              ch2_AFEgain <= ch2_AFEgain;
-              ch3_AFEgain <= ch3_AFEgain;
-			  end
-            2'b10: begin
-              ch1_AFEgain <= command[12:10];
-              ch2_AFEgain <= ch2_AFEgain;
-              ch3_AFEgain <= ch3_AFEgain;
-			  end
-			default: begin
-              ch1_AFEgain <= ch1_AFEgain;
-              ch2_AFEgain <= ch2_AFEgain;
-              ch3_AFEgain <= ch3_AFEgain;			
-			end
-          endcase
-	end else begin
-	  ch1_AFEgain <= ch1_AFEgain;
+        2'b00: begin
+          ch1_AFEgain <= command[12:10];
+          ch2_AFEgain <= ch2_AFEgain;
+          ch3_AFEgain <= ch3_AFEgain;
+        end
+        2'b01: begin
+          ch1_AFEgain <= command[12:10];
+          ch2_AFEgain <= ch2_AFEgain;
+          ch3_AFEgain <= ch3_AFEgain;
+	end
+        2'b10: begin
+          ch1_AFEgain <= command[12:10];
+          ch2_AFEgain <= ch2_AFEgain;
+          ch3_AFEgain <= ch3_AFEgain;
+	  end
+	default: begin
+          ch1_AFEgain <= ch1_AFEgain;
+          ch2_AFEgain <= ch2_AFEgain;
+          ch3_AFEgain <= ch3_AFEgain;			
+	end
+      endcase
+    end else begin
+      ch1_AFEgain <= ch1_AFEgain;
       ch2_AFEgain <= ch2_AFEgain;
       ch3_AFEgain <= ch3_AFEgain;
-	end
+    end
   end
   
    /////////////////////////////////////////
