@@ -173,6 +173,8 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
     wrt_trig_cfg = 0;
     flopAFEgain = 0;
     flopDec = 0;
+    dump_ch = command[9:8];
+    dump = 0;
     case(currentState)
       IDLE: if(cmd_rdy) begin
           nextState = CMD;
@@ -180,8 +182,6 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           SPI_data = 16'h0000;
           ss = 3'b000;
           set_command = 1;
-          dump = 0;
-          dump_ch = 2'b00;
         end else begin
           nextState = IDLE;
         end
@@ -190,7 +190,6 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           // of the 2ndbyte.
           // cc=00 implies channel 1, cc=10 implies channel 3. and cc=11 is reserved
           dump = 1;
-          dump_ch = command[9:8];
           clr_cmd_rdy = 1;
           nextState = IDLE;
         end else if(command[23:16] == CFG_GAIN) begin
