@@ -61,37 +61,85 @@ reg tt; // trigger type
 reg [5:0] aaaaaa; // 6-bit address of calibration EEPROM
 
 initial begin
+    ////////////////////////////////////////////////
+    // Initialization: rst_n = 0, and clear UART //
+    //////////////////////////////////////////////
     gen_init();
     init_UART_comm_mstr();
-    // Check analog gain configure (cmd 02)
+
+    ////////////////////////////////////
+    // CMD 02: Analog gain configure //
+    //////////////////////////////////
+    // Set channel one gain, valid command
     ggg = 3'b011; // analog gain value
     cc = 2'b00; // channel select
     send_cfg_gain_cmd(ggg, cc, 1'b1);
-    // Check set trigger level     (cmd 03)
+    // Set channel two gain, valid command
+    ggg = 3'b001;
+    cc = 2'b01;
+    send_cfg_gain_cmd(ggg, cc, 1'b1);
+    // Set channel three gain, valid command
+    ggg = 3'b010;
+    cc = 2'b10;
+    send_cfg_gain_cmd(ggg, cc, 1'b1);
+    // Set channel "four" gain, invalid command. Should return neg ack
+    ggg = 3'b111;
+    cc = 2'b11;
+    send_cfg_gain_cmd(ggg, cc, 1'b0);
+
+    ///////////////////////////////////////////
+    // CMD 03: Set trigger level (trig_lvl) //
+    /////////////////////////////////////////
     LL = 8'h3F; // trigger level
     send_trig_lvl_cmd(LL, 1'b1);
-    // Check write trigger position register (cmd 04)
+    LL = 8'h2D;
+    send_trig_lvl_cmd(LL, 1'b0);
+
+    //////////////////////////////////////////////
+    // CMD 04: Set trigger position (trig_pos) //
+    ////////////////////////////////////////////
     ULL = 9'h134; // trigger position
     send_trig_pos_cmd(ULL, 1'b1);
-    // Check set decimator (cmd 05)
+
+    ////////////////////////////
+    // CMD 05: Set decimator //
+    //////////////////////////
     L = 4'h2; // decimator
     send_set_dec_cmd(L, 1'b1);
-    // Check TRIG_CFG
+
+    /////////////////////////////////////////////////////
+    // CMD 06: Set trigger config register (trig_cfg) //
+    ///////////////////////////////////////////////////
     d = 1'b0; // capture_done
     e = 1'b1; // edge type, 1 == positive edge, 0 == negative edge
     tt = 2'b01; // trigger type, 10 = auto roll, 01 = normal, 00 = off
     cc = 2'b00; // channel select, 00 = channel 1, 01 = channel
     send_trig_cfg_cmd(d, e, tt, cc, 1'b1);
-    // Write calibration EEP
+    // 2'b10 channel select is invalid. Should return neg ack
+    cc = 2'b10;
+    send_trig_cfg_cmd(d, e, tt, cc, 1'b0);
+
+    //////////////////////////////////////////////////////
+    // CMD 07: Read trigger config register (trig_cfg) //
+    ////////////////////////////////////////////////////
+    cc = 2'b00;
+    send_rd_trig_cfg_cmd(d, e, tt, cc);
+
+    ////////////////////////////////////////////
+    // CMD 08: Write to EEP calibration data //
+    //////////////////////////////////////////
     aaaaaa = 6'h12; // calibration address
     VV = 8'h34; // EEPROM calibration data
     send_eep_wrt_cmd(aaaaaa, VV, 1'b1);
+
+    ////////////////////////////////////////
+    // CMD 09: Read EEP calibration data //
+    //////////////////////////////////////
     // Read calibration EEP
     aaaaaa = 6'h12; // calibration address
     send_eep_rd_cmd(aaaaaa, VV);
-    // Read TRIG_CFG
-    send_rd_trig_cfg_cmd(d, e, tt, cc);
     $stop;
+
     $readmemh("RAM.hex",iDUT.iRAM1.mem);
     $readmemh("RAM2.hex",iDUT.iRAM2.mem);
     $readmemh("RAM3.hex",iDUT.iRAM3.mem);
