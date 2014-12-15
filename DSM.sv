@@ -42,7 +42,7 @@ module DSM(clk, rst_n, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2_AFEGain,
 		(ch_sel == 2'b10)	?	ch3_AFEGain	:
                	3'b000;
   
-  // Indicates whether dump is in progress
+  /*/ Indicates whether dump is in progress
   always_comb begin
     if(!rst_n)
       dump_en = 1'b0;
@@ -51,6 +51,7 @@ module DSM(clk, rst_n, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2_AFEGain,
     else if(dumpDone)
       dump_en = 1'b0;
   end
+  */
 
   ////////////////////////////////////////
   // Following code is the state flops //
@@ -104,13 +105,15 @@ module DSM(clk, rst_n, addr, incAddr, channel, ch_sel, ch1_AFEGain, ch2_AFEGain,
     incAddr = 0;
     startSPI = 0;
     spiTXdata = 16'h0000;
-    
+    dump_en = 1;
     case(currentState)
       IDLE: if(startDump) begin
         nextState = READGAIN;
         flopIn = 1;
-      end else
+      end else begin
         nextState = IDLE;
+        dump_en = 0;
+      end
       READGAIN: begin
         spiTXdata = {2'b00, ch_sel, ggg, 9'b1_0000_0000};
         startSPI = 1;
