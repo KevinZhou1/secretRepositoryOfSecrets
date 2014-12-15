@@ -205,19 +205,25 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           // Determines how many samples to capture after the trigger occurs.
           // This is a 9-bit value <DONE>
           trig_pos = command[8:0];
-          nextState = IDLE;
+          resp_data = 8'hA5;
+          send_resp = 1;
+          nextState = UART;
         end else if(command[23:16] == SET_DEC) begin
           // Set decimator (essentially the sample rate).
           // A 4-bit value is specified in bits[3:0] of the 3rd byte.
           // <DONE>
           decimator = command[3:0];
-          nextState = IDLE;
+          resp_data = 8'hA5;
+          send_resp = 1;
+          nextState = UART;
         end else if(command[23:16] == TRIG_CFG) begin
           // Write trig_cfg register. This command is used to clear the capture_donebit (bit[5] = d).
           // This command is also used to configure the trigger parameters (edge, trigger type, channel)
           // <DONE>
           wrt_trig_cfg = 1;
-          nextState = IDLE;
+          resp_data = 8'hA5;
+          send_resp = 1;
+          nextState = UART;
         end else if(command[23:16] == TRIG_RD) begin
           // Read trig_cfg register. The trig_cfg register is sent out the UART.
           // <DONE>
