@@ -178,7 +178,18 @@ task send_eep_rd_cmd;
     begin
     $display("begin send_eep_rd_cmd...");
     send_UART_mstr_cmd({EEP_RD, 2'h0, aaaaaa, 8'h00});
+    send_UART_mstr_cmd({TRIG_RD, 16'hxxxx});
     check_UART_resp(expected);
+    end
+endtask
+
+task send_dump_cmd;
+    input [1:0] cc;
+    reg [3:0] addr_ptr;
+    begin
+    $display("begin send_eep_rd_cmd...");
+    send_UART_mstr_cmd({DUMP_CH, 6'h00, cc, 8'hxx});
+    repeat(512) @(posedge resp_rdy);
     end
 endtask
 
