@@ -64,11 +64,11 @@ initial begin
     gen_init();
     init_UART_comm_mstr();
     // Check analog gain configure (cmd 02)
-    ggg = 3'b000; // analog gain value
+    ggg = 3'b011; // analog gain value
     cc = 2'b00; // channel select
     send_cfg_gain_cmd(ggg, cc, 1'b1);
     // Check set trigger level     (cmd 03)
-    LL = 8'h2E; // trigger level
+    LL = 8'h3F; // trigger level
     send_trig_lvl_cmd(LL, 1'b1);
     // Check write trigger position register (cmd 04)
     ULL = 9'h134; // trigger position

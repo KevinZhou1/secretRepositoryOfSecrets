@@ -199,14 +199,14 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           nextState = IDLE;
           resp_data = correctedRAM;
         end
-      CMD: if(command[23:16] == DUMP_CH) begin
+      CMD: if(command[23:16] == DUMP_CH && !(&command[9:8])) begin
           // Dump channel command. Channel to dump to UART is specified in the lower 2-bits
           // of the 2ndbyte.
           // cc=00 implies channel 1, cc=10 implies channel 3. and cc=11 is reserved
           dump = 1;
           clr_cmd_rdy = 1;
           nextState = IDLE;
-        end else if(command[23:16] == CFG_GAIN) begin
+        end else if(command[23:16] == CFG_GAIN && !(&command[9:8])) begin
           // Configure analog gain of channel (this would correspond to volts/div on an opamp).
           // Channel to set gain on is specified in lower 2-bits of the 2ndbyte (cc).
           // 3-bit registers storing the current gain for each will be used for accessing the
@@ -280,7 +280,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
         end
       RD_EEP : if(SPI_done) begin
             wrt_SPI = 1;
-            SPI_data = {16'hbcbc};
+            SPI_data = {16'h0000};
             nextState = SPI;
         end else
             nextState = RD_EEP;
