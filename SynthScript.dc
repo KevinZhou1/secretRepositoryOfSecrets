@@ -54,10 +54,10 @@ set_max_transition 0.15 [current_design]
 compile -map_effort medium
 
 #Reports out to a log file#
-check_design > UART_Transceiver_FirstRun.txt
-report_area >> UART_Transceiver_FirstRun.txt
-report_timing -path full -delay max -nworst 3 >> UART_Transceiver_FirstRun.txt
-report_timing -path full -delay min -nworst 3 >> UART_Transceiver_FirstRun.txt
+check_design > DSO_dig_FirstRun.txt
+report_area >> DSO_dig_FirstRun.txt
+report_timing -path full -delay max -nworst 3 >> DSO_dig_FirstRun.txt
+report_timing -path full -delay min -nworst 3 >> DSO_dig_FirstRun.txt
 
 #Remove hierarchy before final compile run#
 ungroup -all
@@ -66,9 +66,9 @@ ungroup -all
 compile -map_effort medium
 
 #Reports out to a log file#
-check_design > UART_Transceiver_SecondRun.txt
-report_area >> UART_Transceiver_SecondRun.txt
-report_timing >> UART_Transceiver_SecondRun.txt
+check_design > DSO_dig_SecondRun.txt
+report_area >> DSO_dig_SecondRun.txt
+report_timing >> DSO_dig_SecondRun.txt
 
 ########################################################
 # Write out final structural verilog netlist.          #
