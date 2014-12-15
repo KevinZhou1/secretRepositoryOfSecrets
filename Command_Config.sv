@@ -34,7 +34,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
 
   assign capture_done = trig_cfg[5];
 
-  typedef enum logic [1:0] { IDLE, CMD, SPI, UART } state_t;
+  typedef enum logic [2:0] { IDLE, CMD, SPI, RD_EEP, UART } state_t;
   state_t currentState, nextState;
 
   ///////////////////////////
@@ -254,7 +254,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
         end else if(command[23:16] == EEP_RD) begin
           // Read calibration EEPROM location specified by 6-bit address.
           // <DONE>
-          nextState = SPI;
+          nextState = RD_EEP;
           wrt_SPI = 1;
           ss = 3'b100;
           SPI_data = {2'b00, command[13:0]};
@@ -265,6 +265,12 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           send_resp = 1;
           nextState = UART;
         end
+      RD_EEP : if(SPI_done) begin
+            wrt_SPI = 1;
+            SPI_data = {16'hbcbc};
+            nextState = SPI;
+        end else
+            nextState = RD_EEP;
       SPI: if(SPI_done) begin
           nextState = UART;
           send_resp = 1;
@@ -274,6 +280,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
             resp_data = 8'hA5;
         end else
           nextState = SPI;
+
       UART: if(resp_sent) begin
            nextState = IDLE;
            clr_cmd_rdy = 1;
