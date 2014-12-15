@@ -130,7 +130,7 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
     MOSI = TX_REG[15];
     SPI_data_out = TX_REG;
 
-    //All possilbe cases enumerated, no need for a default case.
+    //All possible cases enumerated, no need for a default case.
     case(currentState)
       IDLE: if(wrt)
           nextState = TX;
@@ -150,8 +150,8 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
           nextState = BP1;
         end
       BP2: begin
-          done = 1;
-          nextState = IDLE;
+        done = 1;
+        nextState = IDLE;
         end
     endcase
     
@@ -321,7 +321,7 @@ endmodule
 */
 
 
-/*///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
 //Simple test bench that initiates 2 wrt series with cmd values for comparison.  //
 //////////////////////////////////////////////////////////////////////////////////
 module SPI_Master_Slave_tb();
@@ -381,12 +381,10 @@ module SPI_Master_Slave_tb();
     //    cmd_s:		16'hDEAD    //
     /////////////////////////////////////////
 
-    #500;
     cmd = 16'hDEAD;
     SPI_slave_out = 16'hBEEF;
-    @(negedge clk);
     wrt = 1;
-    @(negedge clk);
+    @(posedge clk);
     wrt = 0;
     @(negedge done);
     if(cmd != cmd_s)
@@ -397,4 +395,4 @@ module SPI_Master_Slave_tb();
     $stop;
   end
 endmodule
-*/
+
