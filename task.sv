@@ -47,6 +47,7 @@ task send_cfg_gain_cmd;
     input [2:0] ggg; // analog gain value
     input [1:0] cc;  // channel select
     input valid;     //check for positive or negative ack?
+    reg [7:0] AFEgain;
     begin
     $display("begin send cfg_gain_cmd...");
     send_UART_mstr_cmd({CFG_GAIN, 3'h0, ggg, cc, 8'hxx});
@@ -54,6 +55,27 @@ task send_cfg_gain_cmd;
         check_UART_pos_ack();
     else
         check_UART_neg_ack();
+    case(ggg)
+      3'b000: AFEgain = 8'h02;
+      3'b001: AFEgain = 8'h05;
+      3'b010: AFEgain = 8'h09;
+      3'b011: AFEgain = 8'h14;
+      3'b100: AFEgain = 8'h28;
+      3'b101: AFEgain = 8'h46;
+      3'b110: AFEgain = 8'h6B; 
+      3'b111: AFEgain = 8'hDD;
+    endcase
+    case(cc)
+      2'b00 : 
+        if(iAFE.ch1_gain0 !== AFEgain || iAFE.ch1_gain1 !== AFEgain)
+          $display("iAFE channel 1 gain expected 0x%h, got 0x%h and 0x%h", AFEgain, iAFE.ch1_gain0, iAFE.ch1_gain1);
+      2'b01 :
+        if(iAFE.ch2_gain0 !== AFEgain || iAFE.ch2_gain1 !== AFEgain)
+          $display("iAFE channel 1 gain expected 0x%h, got 0x%h and 0x%h", AFEgain, iAFE.ch2_gain0, iAFE.ch2_gain1);
+      2'b10 : 
+        if(iAFE.ch3_gain0 !== AFEgain || iAFE.ch3_gain1 !== AFEgain)
+          $display("iAFE channel 1 gain expected 0x%h, got 0x%h and 0x%h", AFEgain, iAFE.ch3_gain0, iAFE.ch3_gain1);
+    endcase
     end
 endtask
 
@@ -67,6 +89,8 @@ task send_trig_lvl_cmd;
         check_UART_pos_ack();
     else
         check_UART_neg_ack();
+    if(iAFE.trig1_lvl !== LL || iAFE.trig2_lvl !== LL)
+        $display("Trig level not set properly, expected 0x%h, got 0x%h and 0x%h", LL, iAFE.trig1_lvl, iAFE.trig2_lvl);
     end
 endtask
 

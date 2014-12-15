@@ -214,7 +214,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           // <DONE>
           nextState = SPI;
           wrt_SPI = 1;
-          ss = {1'b0,command[9:8]};
+          ss = {1'b0,command[9:8]} + 1;
           SPI_data = AFEgainSPI;
 		  flopAFEgain = 1;
         end else if((command[23:16] == TRIG_LVL) && (command[7:0] >= 46) && (command[7:0] <= 201)) begin
