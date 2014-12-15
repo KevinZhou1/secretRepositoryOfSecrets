@@ -187,7 +187,7 @@ task send_dump_cmd;
     input [1:0] cc;
     reg [3:0] addr_ptr;
     begin
-    $display("begin send_eep_rd_cmd...");
+    $display("begin send_dump_cmd...");
     send_UART_mstr_cmd({DUMP_CH, 6'h00, cc, 8'hxx});
     repeat(512) @(posedge resp_rdy);
     end
