@@ -100,14 +100,14 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           ch3_AFEgain <= ch3_AFEgain;
         end
         2'b01: begin
-          ch1_AFEgain <= command[12:10];
-          ch2_AFEgain <= ch2_AFEgain;
+          ch1_AFEgain <= ch1_AFEgain;
+          ch2_AFEgain <= command[12:10];
           ch3_AFEgain <= ch3_AFEgain;
 	end
         2'b10: begin
-          ch1_AFEgain <= command[12:10];
+          ch1_AFEgain <= ch1_AFEgain;
           ch2_AFEgain <= ch2_AFEgain;
-          ch3_AFEgain <= ch3_AFEgain;
+          ch3_AFEgain <= command[12:10];
 	  end
 	default: begin
           ch1_AFEgain <= ch1_AFEgain;
