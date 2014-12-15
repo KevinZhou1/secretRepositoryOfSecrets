@@ -242,7 +242,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           resp_data = 8'hA5;
           send_resp = 1;
           nextState = UART;
-        end else if(command[23:16] == TRIG_CFG) begin
+        end else if(command[23:16] == TRIG_CFG && !cmd[9]) begin
           // Write trig_cfg register. This command is used to clear the capture_donebit (bit[5] = d).
           // This command is also used to configure the trigger parameters (edge, trigger type, channel)
           // <DONE>

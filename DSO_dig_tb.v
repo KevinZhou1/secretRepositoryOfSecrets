@@ -90,7 +90,7 @@ initial begin
     ///////////////////////////////////////////
     // CMD 03: Set trigger level (trig_lvl) //
     /////////////////////////////////////////
-    LL = 8'h3F; // trigger level
+    LL = 8'h80; // trigger level
     send_trig_lvl_cmd(LL, 1'b1);
     LL = 8'h2D;
     send_trig_lvl_cmd(LL, 1'b0);

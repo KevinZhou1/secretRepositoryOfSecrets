@@ -1,5 +1,6 @@
 module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap_done,
-                   decimator, addr_ptr, set_capture_done, dump, dump_fin, trig_cfg, we, en, incAddr);
+                   decimator, addr_ptr, set_capture_done, dump, dump_fin, trig_cfg, we,
+                   en, incAddr);
   /////////////////////////////////////////////////////////////////
   //This module controls the flow of data capture from the ADCs.//
   //Contains arming logic that determines if it can trigger.   //
@@ -107,13 +108,15 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   end
 
   // Decide whether or not to keep/write sample based on decimator
-  assign keep = ((wait_cnt == (1 << decimator) - 1) && |trig_cfg[3:2]) ? 1'b1 : 1'b0;
+  assign keep = ((wait_cnt == (1 << decimator) - 1) && trig_en && !capture_done) ? 1'b1 : 1'b0;
   
   assign en_trig_cnt = (triggered | autoroll&armed)&keep;
   
   assign en_smpl_cnt = !triggered&keep;
   
   assign armed = (smpl_cnt + trig_pos >= 512) ? 1'b1 : 1'b0;
+
+  assign trig_en = |trig_cfg[3:2];
 
   // STATE MACHINE ftw
   always_comb begin
@@ -126,7 +129,7 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
     en = 1'b0;
     case(currentState)
       IDLE :  begin
-        if((|trig_cfg[3:2]) & adc_clk) begin
+        if(trig_en & adc_clk) begin
           nextState = WRT;
           clr_cnt = 1'b1;
           trace_end = 8'h00;

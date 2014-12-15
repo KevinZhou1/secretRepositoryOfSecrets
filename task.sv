@@ -85,12 +85,13 @@ task send_trig_lvl_cmd;
     begin
     $display("begin send_trig_lvl_cmd...");
     send_UART_mstr_cmd({TRIG_LVL, 8'hxx, LL});
-    if(valid)
+    if(valid) begin
         check_UART_pos_ack();
-    else
-        check_UART_neg_ack();
     if(iAFE.trig1_lvl !== LL || iAFE.trig2_lvl !== LL)
-        $display("Trig level not set properly, expected 0x%h, got 0x%h and 0x%h", LL, iAFE.trig1_lvl, iAFE.trig2_lvl);
+        $display("Trig level not set properly, expected 0x%h, got 0x%h and 0x%h", 
+                 LL, iAFE.trig1_lvl, iAFE.trig2_lvl);
+    end else
+        check_UART_neg_ack();
     end
 endtask
 
@@ -135,13 +136,13 @@ task send_trig_cfg_cmd;
     begin
     $display("begin send_trig_cfg_cmd...");
     send_UART_mstr_cmd({TRIG_CFG, 2'b00, d, e, tt, cc, 8'hxx});
-    if(valid)
+    if(valid) begin
         check_UART_pos_ack();
-    else
+        if(iDUT.idig_core.trig_cfg !== {2'b00, d, e, tt, cc})
+            $display("Expected trig_cfg value = 0x%h, actual 0x%h", L,
+                     iDUT.idig_core.trig_cfg);
+    end else
         check_UART_neg_ack();
-    if(iDUT.idig_core.trig_cfg !== {2'b00, d, e, tt, cc})
-        $display("Expected trig_cfg value = 0x%h, actual 0x%h", L,
-                 iDUT.idig_core.trig_cfg);
     end
 endtask
 
