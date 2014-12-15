@@ -16,6 +16,7 @@ reg [1:0] cmd_byte_count; // Current cmd byte index
 reg write; // Enable a write of a byte of cmd
 reg write_done; // Indicate that reading of one byte is finished
 reg start, done;
+reg RX_ff1, RX_ff2;         // flops for RX metastability
 
 // UART module I/O
 reg clr_rdy;
@@ -66,6 +67,17 @@ always_ff @(posedge clk, negedge rst_n) begin
         cmd_rdy <= 1'b1;
 end
 
+// Double flop RX for metastability purposes
+always_ff @(posedge clk, negedge rst_n) begin
+		if (!rst_n) begin
+				RX_ff1 <= 1'b0;
+				RX_ff2 <= 1'b0;
+		end else begin
+		    RX_ff1 <= RX;
+		    RX_ff2 <= RX_ff1;
+		end
+end
+
 // State machine
 always_comb begin
     // Default values
@@ -76,7 +88,7 @@ always_comb begin
     nxt_state = IDLE;
     case (state)
         IDLE : begin
-            if(!RX) begin // Start bit: Begin reading in command
+            if(!RX_ff2) begin // Start bit: Begin reading in command
                 start = 1'b1;
                 nxt_state = WAIT;
             end

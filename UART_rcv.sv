@@ -73,7 +73,7 @@ assign shift = (baud_cnt == 7'h40);
 always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n)
         rdy <= 1'b0;
-		else if(clr_rdy || receiving)
+		else if(clr_rdy || start)
         rdy <= 1'b0;
     else if(done)
         rdy <= 1'b1;
