@@ -106,7 +106,7 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_pos, clr_cap_done,
   end
 
   // Decide whether or not to keep/write sample based on decimator
-  assign keep = ((wait_cnt == ((1 << decimator) - 1)) && trig_en && !capture_done) ? 1'b1 : 1'b0;
+  assign keep = ((wait_cnt == (1 << decimator)) && trig_en && !capture_done) ? 1'b1 : 1'b0;
   
   assign en_trig_cnt = (triggered | autoroll&armed)&keep;
   
