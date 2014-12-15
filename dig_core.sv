@@ -38,7 +38,6 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   wire clr_cap_done;                            // Signal to clear current capture status on the Capture module
   wire set_capture_done;
   wire dump;
-  wire dumpDone;
   wire cap_we, cap_en;
   wire dump_en;
   wire dump_fin;
@@ -82,7 +81,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   ADC_Capture iADC_Cap(.clk(clk), .rst_n(rst_n), .trig1(trig1), .trig2(trig2),
                        .trig_pos(trig_pos), .clr_cap_done(clr_cap_done), .addr_ptr(addr_ptr),
                        .set_capture_done(set_capture_done), .decimator(decimator), .dump(dump),
-                       .dump_fin(dumpDone), .trig_cfg(trig_cfg), .we(cap_we), .en(cap_en),
+                       .dump_fin(dump_fin), .trig_cfg(trig_cfg), .we(cap_we), .en(cap_en),
                        .adc_clk(adc_clk), .incAddr(incAddr));
 
   RAM_Interface iRAM_Int(.ch1_rdata(ch1_rdata),
