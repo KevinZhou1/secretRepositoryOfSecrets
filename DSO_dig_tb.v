@@ -123,6 +123,7 @@ initial begin
     // CMD 07: Read trigger config register (trig_cfg) //
     ////////////////////////////////////////////////////
     cc = 2'b00;
+    d = 1'b1;
     send_rd_trig_cfg_cmd(d, e, tt, cc);
 
     ////////////////////////////////////////////

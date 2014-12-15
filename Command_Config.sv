@@ -162,7 +162,7 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
   ////////////////////////////////////////////////////
   always @(posedge clk, negedge rst_n) begin
     if(!rst_n)
-      trig_cfg <= 8'h20;
+      trig_cfg <= 8'h00;
     else if(set_capture_done)
       trig_cfg <= {2'b00, 1'b1, trig_cfg[4:0]};
     else if(wrt_trig_cfg)
