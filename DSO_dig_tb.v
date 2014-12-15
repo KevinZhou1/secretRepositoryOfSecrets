@@ -67,10 +67,10 @@ initial begin
     ggg = 3'b000; // analog gain value
     cc = 2'b00; // channel select
     send_cfg_gain_cmd(ggg, cc, 1'b1);
-    /*// Check set trigger level     (cmd 03)
+    // Check set trigger level     (cmd 03)
     LL = 8'h00; // trigger level
     send_trig_lvl_cmd(LL, 1'b1);
-    // Check write trigger position register (cmd 04)
+    /*// Check write trigger position register (cmd 04)
     ULL = 9'h100; // trigger position
     send_trig_pos_cmd(ULL, 1'b1);
     // Check set decimator (cmd 05)

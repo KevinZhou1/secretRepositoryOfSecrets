@@ -66,7 +66,7 @@ module DSO_dig(clk,rst_n,adc_clk,ch1_data,ch2_data,ch3_data,trig1,trig2,MOSI,MIS
   ///////////////////////////////////
   // Instantiate UART_comm module //
   /////////////////////////////////
-  UART_comm iUART(.cmd_rdy(cmd_rdy), .cmd(cmd), .TX(TX), .tx_done(tx_done),
+  UART_comm iUART(.cmd_rdy(cmd_rdy), .cmd(cmd), .TX(TX), .tx_done(resp_sent),
                 .clk(clk), .rst_n(rst_n), .clr_cmd_rdy(clr_cmd_rdy),
                 .trmt(send_resp), .RX(RX), .tx_data(resp_data));
   
@@ -79,7 +79,7 @@ module DSO_dig(clk,rst_n,adc_clk,ch1_data,ch2_data,ch3_data,trig1,trig2,MOSI,MIS
                      .rclk(rclk),.en(en),.we(we),.addr(addr),.ch1_rdata(ch1_rdata),
                      .ch2_rdata(ch2_rdata),.ch3_rdata(ch3_rdata),.cmd(cmd),.cmd_rdy(cmd_rdy),
                      .clr_cmd_rdy(clr_cmd_rdy), .resp_data(resp_data),.send_resp(send_resp),
-                     .resp_sent(tx_done));
+                     .resp_sent(resp_sent));
   //////////////////////////////////////////////////////////////
   // Instantiate the 3 512 RAM blocks that store A2D samples //
   ////////////////////////////////////////////////////////////

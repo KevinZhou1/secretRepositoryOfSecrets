@@ -239,7 +239,6 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
           nextState = UART;
         end
       SPI: if(SPI_done) begin
-          clr_cmd_rdy = 1;
           nextState = UART;
           send_resp = 1;
           if(!SPI_data[14] && ss[2]) // Send calibration EEPROM data
@@ -252,7 +251,8 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
            nextState = IDLE;
            clr_cmd_rdy = 1;
         end else
-           nextState = IDLE;
+           nextState = UART;
+      default: ;
     endcase
     
   end
