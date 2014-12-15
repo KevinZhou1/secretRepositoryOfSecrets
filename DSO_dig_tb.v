@@ -72,10 +72,10 @@ initial begin
     send_trig_lvl_cmd(LL, 1'b1);
     // Check write trigger position register (cmd 04)
     ULL = 9'h100; // trigger position
-    send_trig_pos_cmd(ULL, 1'b1);/*
+    send_trig_pos_cmd(ULL, 1'b1);
     // Check set decimator (cmd 05)
     L = 4'h0; // decimator
-    send_set_dec_cmd(LL, 1'b1);
+    send_set_dec_cmd(LL, 1'b1);/*
     // Check TRIG_CFG
     d = 1'b0; // capture_done
     e = 1'b1; // edge type, 1 == positive edge, 0 == negative edge

@@ -76,8 +76,11 @@ task send_trig_pos_cmd;
         check_UART_pos_ack();
     else
         check_UART_neg_ack();
+    if(iDUT.idig_core.trig_pos !== ULL)
+        $display("Expected trig_pos = 0x%h, actual 0x%h", ULL,
+                 iDUT.idig_core.trig_pos);
     end
-        endtask
+endtask
 
 task send_set_dec_cmd;
     input [3:0] L; // decimator
@@ -88,6 +91,9 @@ task send_set_dec_cmd;
         check_UART_pos_ack();
     else
         check_UART_neg_ack();
+    if(iDUT.idig_core.decimator !== L)
+        $display("Expected decimator value = 0x%h, actual 0x%h", L,
+                 iDUT.idig_core.decimator);
     end
 endtask
 
@@ -103,6 +109,9 @@ task send_trig_cfg_cmd;
         check_UART_pos_ack();
     else
         check_UART_neg_ack();
+    if(iDUT.idig_core.trig_cfg !== {2'b00, d, e, tt, cc})
+        $display("Expected trig_cfg value = 0x%h, actual 0x%h", L,
+                 iDUT.idig_core.trig_cfg);
     end
 endtask
 
