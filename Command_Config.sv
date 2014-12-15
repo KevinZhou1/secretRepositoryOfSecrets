@@ -133,14 +133,18 @@ module Command_Config(clk, rst_n, SPI_done, EEP_data, cmd, cmd_rdy, resp_sent, R
       command <= cmd[23:0];
   end
 
-  // trig_cfg logic
-  always_comb begin
+  //////////////////////////////////////////////////////
+  //trig_cfg FlipFlop.                               //
+  ////////////////////////////////////////////////////
+  always @(posedge clk, negedge rst_n) begin
     if(!rst_n)
-      trig_cfg = 8'h00;
+      trig_cfg <= 8'h00;
     else if(set_capture_done)
-      trig_cfg[5] = 1;
+      trig_cfg <= {2'b00, 1'b1, trig_cfg[4:0]};
     else if(wrt_trig_cfg)
-      trig_cfg = {2'b00, command[13:8]};
+      trig_cfg <= {2'b00, command[13:8]};
+    else
+      trig_cfg <= trig_cfg;
   end
 
   //////////////////////////////////////////////////////////////////////
