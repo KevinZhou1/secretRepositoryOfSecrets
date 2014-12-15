@@ -27,7 +27,7 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
   logic MISO_FF1, MISO_FF2;
   logic [4:0] SCLK_cnt;
   logic [3:0] pulse_cnt;
-  logic [15:0] TX_REG, RX_REG;
+  logic [15:0] TX_REG;//, RX_REG;
 
 
   state_t currentState, nextState;
@@ -67,12 +67,12 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
     else if((currentState == IDLE)&&wrt)
       TX_REG <= cmd;
     else if((currentState == TX)&&(&SCLK_cnt))
-      TX_REG <= {TX_REG[14:0],1'b0};
+      TX_REG <= {TX_REG[14:0],MISO_FF2};
     else
       TX_REG <= TX_REG;
   end
 
-  /////////////////////////////////////////////////////////////////////
+  /*////////////////////////////////////////////////////////////////////
   //The following is my receive shift register.  Reset is redundant //
   //, but I like having it. Shifts MISO in from the right as SCLK  //
   //is falling.  Maintains value otherwise.                       //
@@ -84,7 +84,7 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
       RX_REG <= {RX_REG[14:0],MISO_FF2};
     else
       RX_REG <= RX_REG;
-  end
+  end*/
   
   ////////////////////////////////////////////////////////////////////
   //Following code is for the counter that counts up to 32 for SCLK//
@@ -128,7 +128,7 @@ module SPI_Master(clk, rst_n, cmd, wrt, MISO, SCLK, MOSI, SS_n, done, SPI_data_o
     done = 0;
     nextState = IDLE;
     MOSI = TX_REG[15];
-    SPI_data_out = RX_REG;
+    SPI_data_out = TX_REG;
 
     //All possilbe cases enumerated, no need for a default case.
     case(currentState)
