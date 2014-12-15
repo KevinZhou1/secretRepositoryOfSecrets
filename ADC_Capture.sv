@@ -18,14 +18,14 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   input incAddr;  //External signal to increment the addr_ptr
   output logic [8:0] addr_ptr;
   output logic set_capture_done;
-  output we, en;
+  output logic we, en;
 
   typedef enum logic [2:0] { IDLE, WRT, WRT2, DONE, DUMP } state_t;
   state_t currentState, nextState;
 
   logic clr_cnt;
   logic [15:0] smpl_cnt, trig_cnt;
-  logic [14:0] wait_cnt;
+  logic [15:0] wait_cnt;
   logic [7:0] trace_end;
   logic en_wait_cnt;
   logic keep_ff;
@@ -107,16 +107,13 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
   end
 
   // Decide whether or not to keep/write sample based on decimator
-  assign keep = (wait_cnt == (1 << decimator) - 1) ? 1'b1 : 1'b0;
+  assign keep = ((wait_cnt == (1 << decimator) - 1) && |trig_cfg[3:2]) ? 1'b1 : 1'b0;
   
   assign en_trig_cnt = (triggered | autoroll&armed)&keep;
   
   assign en_smpl_cnt = !triggered&keep;
   
   assign armed = (smpl_cnt + trig_pos >= 512) ? 1'b1 : 1'b0;
-  
-  assign we = keep;
-  assign en = keep;
 
   // STATE MACHINE ftw
   always_comb begin
@@ -125,6 +122,8 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
     nextState = IDLE;
     set_capture_done = 1'b0;
     en_wait_cnt = 1'b0;
+    we = 1'b0;
+    en = 1'b0;
     case(currentState)
       IDLE :  begin
         if((|trig_cfg[3:2]) & adc_clk) begin
@@ -134,6 +133,8 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
         end else if(dump)
           nextState = DUMP;
       end WRT : begin
+        we = keep_ff;
+        en = keep_ff;
         en_wait_cnt = 1'b1; // Count half the time
         nextState = WRT2;
       end WRT2 : begin
@@ -142,6 +143,8 @@ module ADC_Capture(clk, rst_n, adc_clk, trig1, trig2, trig_en, trig_pos, clr_cap
           trace_end = addr_ptr;
           nextState = DONE;
         end else
+          we = keep;
+          en = keep;
           nextState = WRT;
       end DONE : begin
         if(capture_done)
