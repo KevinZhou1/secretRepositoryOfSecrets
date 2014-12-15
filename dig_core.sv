@@ -73,7 +73,7 @@ module dig_core(clk,rst_n,adc_clk,trig1,trig2,SPI_data,wrt_SPI,SPI_done,ss,EEP_d
   
   assign wrt_SPI = (dump_en) ? wrt_SPIDSM : wrt_SPICNC;
   assign SPI_data = (dump_en) ? SPI_dataDSM : SPI_dataCNC;
-  assign resp_data = (dump_en) ? EEP_data : resp_dataCNC;
+  assign resp_data = resp_dataCNC;
   assign send_resp = (dump_en) ? send_respDSM : send_respCNC;
   
   ///////////////////////////////////////////////////////

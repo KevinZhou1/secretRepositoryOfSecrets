@@ -8,10 +8,10 @@ module RAM_Interface(ch1_rdata, ch2_rdata, ch3_rdata, we, en, ch_sel, read_data,
   output logic [7:0] read_data;	     // read data, read occurs on clock high
 
 
-  assign read_data = 	(ch_sel == 2'b01)	?	ch1_rdata	:
-			(ch_sel == 2'b10)	?	ch2_rdata	:
-			(ch_sel == 2'b11)	?	ch3_rdata	:
-							8'b0000_0000;
+  assign read_data = 	(ch_sel == 2'b00)	?	ch1_rdata	:
+			(ch_sel == 2'b01)	?	ch2_rdata	:
+			(ch_sel == 2'b10)	?	ch3_rdata	:
+							8'h42;
   assign en = (cap_en|dump_en);
   assign we = cap_we;
 
